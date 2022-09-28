@@ -34,23 +34,24 @@ $words = $myJson["words"];
 $current_word = $words[0];
 // var_dump(gettype($myJson));
 
-$$html = str_get_html($response);
+$html = str_get_html($response);
 
+
+//Массив заданных условием букв;
 $claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ"];
 // var_dump($claim[0]);
 
-
-
+//Берем первую букву;
 $first_character = mb_substr($current_word, 0, 1);
-
 // var_dump(mb_strlen($current_word));
 
+//Проверка на вхождение символа в строку
 if (strpos($claim[0], $first_character) !== false) {
   // var_dump($first_character . " входит в " . $claim[0]);
 };
 
 
-
+//Перевод строки в массив символов
 $arrStr = preg_split("//u", $current_word, -1, PREG_SPLIT_NO_EMPTY);
 var_dump($arrStr . "<br>\n");
 var_dump($current_word . "<br>\n");
@@ -59,14 +60,8 @@ $test = count($arrStr);
 var_dump($test . "<br>\n");
 
 
+//Перебор массива
 foreach ($arrStr as $char => $v) {
-  // if (next($char) == true) {
-  //   var_dump($char);
-  // } else {
-  //   var_dump($char . " это последний элемент");
-  // }
-
-
   var_dump("Текущий элемент: " . $v . " Вот это char =" . $char);
   var_dump("Следующий элемент: " . $arrStr[$char + 1] . " и номер у него char = " . $char + 1 . "<br>\n");
   var_dump($char);
