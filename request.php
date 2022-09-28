@@ -40,13 +40,13 @@ $current_word = $words[0];
 //Полученные данные
 $data = [$data1, $data2, $data3, $data4, $data5];
 // $data1 = file_get_contents("https://poncy.ru/crossword/crossword-solve.jsn");
-$data1 = file_get_contents("./php.json");
+$data1 = file_get_contents("./data1.json");
 $data2 = file_get_contents("./php2.json");
 $data3 = file_get_contents("./php3.json");
 $data4 = file_get_contents("./php4.json");
 $data5 = file_get_contents("./php5.json");
 
-file_put_contents("data1.json", $data1); //сохраняю себе
+// file_put_contents("data1.json", $data1); //сохраняю себе
 
 
 //Обрабатываю полученные данные и привожу к массиву
@@ -133,7 +133,7 @@ foreach ($words1 as $word => $letters) {
       var_dump("ПОДХОДИТ");
       var_dump("Маска: " . $encryptedWords[(int)$letter]);
       var_dump("Буквы: " . $claim[$encryptedWords[(int)$letter] - 1]);
-      var_dump("Текущий элемент: " . $value . " ; letter =" . $letter . "; не входит в " . $claim[$encryptedWords[(int)$letter] - 1] . "<br>\n");
+      var_dump("Текущий элемент: " . $value . " ; letter =" . $letter . "; входит в " . $claim[$encryptedWords[(int)$letter] - 1] . "<br>\n");
     } else {
       var_dump("НЕТ ");
       var_dump("Маска: " . $encryptedWords[(int)$letter]);
