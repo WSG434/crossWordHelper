@@ -65,34 +65,11 @@ function getData($url = "", $mask = "", $count = 0, $arr_words = [], $i = 0)
 //.
 
 
-//Полученные данные
 
-$data1_1 = file_get_contents("./data1.1.json");
-$data1_2 = file_get_contents("./data1.2.json");
-$data1_3 = file_get_contents("./data1.3.json");
-
-$data2_1 = file_get_contents("./data2.1.json");
-$data2_2 = file_get_contents("./data2.2.json");
-$data2_3 = file_get_contents("./data2.3.json");
-
-$data3_1 = file_get_contents("./data3.1.json");
-$data3_2 = file_get_contents("./data3.2.json");
-$data3_3 = file_get_contents("./data3.3.json");
-
-$data4_1 = file_get_contents("./data4.1.json");
-$data4_2 = file_get_contents("./data4.2.json");
-$data4_3 = file_get_contents("./data4.3.json");
-
-$data5_1 = file_get_contents("./data5.1.json");
-$data5_2 = file_get_contents("./data5.2.json");
-$data5_3 = file_get_contents("./data5.3.json");
-
-$data = [$data1, $data2, $data3, $data4, $data5];
 
 
 //---------------------------------------------------------------------------------
-
-//Обрабатываю полученные данные и привожу к массиву
+//Получаю данные в JSON, обрабатываю их и привожу к массиву;
 // $myJson = json_decode($data1, true);
 // $words1 = $myJson["words"];
 
@@ -100,26 +77,27 @@ $data = [$data1, $data2, $data3, $data4, $data5];
 $words1[0] = json_decode(file_get_contents("./data/data1.1.json"), true);
 $words1[1] = json_decode(file_get_contents("./data/data1.2.json"), true);
 $words1[2] = json_decode(file_get_contents("./data/data1.3.json"), true);
-// $words2 = json_decode($data[1], true);
-// $words3 = json_decode($data[2], true);
-// $words4 = json_decode($data[3], true);
-// $words5 = json_decode($data[4], true);
-// $words = [$words1, $words2, $words3, $words4, $words5];
+$words2[0] = json_decode(file_get_contents("./data/data2.1.json"), true);
+$words2[1] = json_decode(file_get_contents("./data/data2.2.json"), true);
+$words2[2] = json_decode(file_get_contents("./data/data2.3.json"), true);
+$words3[0] = json_decode(file_get_contents("./data/data3.1.json"), true);
+$words3[1] = json_decode(file_get_contents("./data/data3.2.json"), true);
+$words3[2] = json_decode(file_get_contents("./data/data3.3.json"), true);
+$words4[0] = json_decode(file_get_contents("./data/data4.1.json"), true);
+$words4[1] = json_decode(file_get_contents("./data/data4.2.json"), true);
+$words4[2] = json_decode(file_get_contents("./data/data4.3.json"), true);
+$words5[0] = json_decode(file_get_contents("./data/data5.1.json"), true);
+$words5[1] = json_decode(file_get_contents("./data/data5.2.json"), true);
+$words5[2] = json_decode(file_get_contents("./data/data5.3.json"), true);
+
+$words = [$words1, $words2, $words3, $words4, $words5];
 
 
 
 //Массив загаданных слов
 // $encryptedWords = ["1153241526", "1656335361", "5424251322", "3655516563", "4213633456"];
-//Перевожу их в массив символов
-// $encryptedWords = [
-//   preg_split("//u", "1153241526", -1, PREG_SPLIT_NO_EMPTY),
-//   preg_split("//u", "1656335361", -1, PREG_SPLIT_NO_EMPTY),
-//   preg_split("//u", "5424251322", -1, PREG_SPLIT_NO_EMPTY),
-//   preg_split("//u", "3655516563", -1, PREG_SPLIT_NO_EMPTY),
-//   preg_split("//u", "4213633456", -1, PREG_SPLIT_NO_EMPTY),
-// ];
 
-
+//Перевожу их в массив символов, чтобы можно было работать с масками
 $encryptedWords = [
   $word1 = preg_split("//u", "1153241526", -1, PREG_SPLIT_NO_EMPTY),
   $word2 = preg_split("//u", "1656335361", -1, PREG_SPLIT_NO_EMPTY),
@@ -128,10 +106,9 @@ $encryptedWords = [
   $word5 = preg_split("//u", "4213633456", -1, PREG_SPLIT_NO_EMPTY),
 ];
 
-// $comma_separated = implode("", $encryptedWords[0]); // Собирает всю строку из массива симоволов
-// var_dump("ВОООООООООООТ ЗДЕСЬ: " . $comma_separated);
-
+// $crypt = implode("", $encryptedWords[0]); // Собирает всю строку из массива симоволов
 // $encryptedWords = preg_split("//u", "1153241526", -1, PREG_SPLIT_NO_EMPTY); // Разбирает всю строку на массив символов
+
 
 
 
@@ -152,8 +129,157 @@ var_dump("Это encryptedWords[0] = " . $encryptedWords[0][0] . "<br>\n");
 $resultWords = [[], [], [], [], []];
 
 
+// foreach ($encryptedWords as $t => $encryptedWord) {
+// var_dump("Иттерация: " . $t . "; Шифрованное слово: " . implode("", $encryptedWord) . "<br>\n");
+// findMatches($encryptedWord[0], $encryptedWord);
+// foreach (${$words . [$encryptedWord[0]]} as $c => $currentDataLetter) {
+// var_dump($currentDataLetter);
+// var_dump($c);
+
+// }
+
+findMatches("1", $encryptedWord[0]);
 
 
+function findMatches($claimType, $encryptedWord = [])
+{
+  $claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ"];
+  switch ($claimType) {
+    case 1: {
+        $resultWords = [];
+        var_dump("claimType, говорит что равен 1; Правда? " . $claimType . "<br>\n");
+
+        $words1[0] = (json_decode(file_get_contents("./data/data1.1.json"), true))["words"];
+        $words1[1] = (json_decode(file_get_contents("./data/data1.2.json"), true))["words"];
+        $words1[2] = (json_decode(file_get_contents("./data/data1.3.json"), true))["words"];
+
+        foreach ($words1 as $i => $currentDataLetter) {
+          foreach ($currentDataLetter as $word => $currentWord) {
+            $currentLetters = preg_split("//u", $currentWord, -1, PREG_SPLIT_NO_EMPTY);
+            var_dump("Текущее слово: " . $currentWord . "<br>\n");
+            foreach ($currentLetters as $letter => $value) {
+
+              //Проверка на 6 маску с неизвестной буквой
+              if ($encryptedWord[(int)$letter] === "6") {
+                var_dump("ПОДХОДИТ по маске 6 = " .  $encryptedWord[(int)$letter] . "<br>\n");
+                //Проверка на тот случай, если 6 маска в конце слова
+                if (!$currentLetters[$letter + 1]) {
+                  //Записываем в результирующий массив
+                  array_push($resultWords, $currentWord);
+                  var_dump("СЛОВО " . $currentWord . " ДОБАВЛЕНО В РЕЗУЛЬТИРУЮЩИЙ МАССИВ" . "<br>\n");
+                  var_dump("последний элемент" . "<br>\n");
+                }
+                continue;
+              }
+
+              if (strpos($claim[$encryptedWord[(int)$letter] - 1], $value) !== false) {
+                var_dump("ПОДХОДИТ");
+                var_dump("Маска: " . $encryptedWord[(int)$letter]);
+                var_dump("Буквы: " . $claim[$encryptedWord[(int)$letter] - 1]);
+                var_dump("Текущий элемент: " . $value . " ; letter =" . $letter . "; входит в " . $claim[$encryptedWord[(int)$letter] - 1] . "<br>\n");
+              } else {
+                var_dump("НЕТ ");
+                var_dump("Маска: " . $encryptedWord[(int)$letter]);
+                var_dump("Буквы: " . $claim[$encryptedWord[(int)$letter] - 1]);
+                var_dump("Текущий элемент: " . $value . "; letter =" . $letter . "; не входит в " . $claim[$encryptedWord[(int)$letter] - 1] . "<br>\n");
+                break;
+              }
+
+              if (!$currentLetters[$letter + 1]) {
+                //Записываем в результирующий массив
+                array_push($resultWords[0], $currentWord);
+                var_dump("СЛОВО " . $currentWord . " ДОБАВЛЕНО В РЕЗУЛЬТИРУЮЩИЙ МАССИВ №" . $i . "<br>\n");
+                var_dump("последний элемент" . "<br>\n");
+              }
+            }
+          }
+        }
+
+        var_dump("Результирующий массив №" . count($resultWords));
+
+        foreach ($resultWords as $e => $arr) {
+          var_dump("Результирующий массив №" . $e + 1 . ": " . $arr);
+          foreach ($arr as $j => $v) {
+            var_dump($v);
+          }
+          var_dump("<br>\n");
+        }
+        break;
+        return;
+      }
+    case 2:
+      var_dump("claimType, говорит что равен 2; Правда? " . $claimType . "<br>\n");
+      break;
+    case 3:
+      var_dump("claimType, говорит что равен 3; Правда? " . $claimType . "<br>\n");
+      break;
+    case 4:
+      var_dump("claimType, говорит что равен 4; Правда? " . $claimType . "<br>\n");
+      break;
+    case 5:
+      var_dump("claimType, говорит что равен 5; Правда? " . $claimType . "<br>\n");
+      break;
+  }
+  return;
+}
+
+// for ($i = 0; $i < 6; $i++) {
+//   // Начинаю обходить массив данных и ищу совпадения
+//   foreach ($words[$i] as $word => $currentWord) {
+//     //Привожу строку к массиву символов
+//     var_dump($currentWord . "<br>\n");
+//     $crypt = implode("", $encryptedWords[$i]);
+//     var_dump($crypt . "<br>\n");
+//     $currentLetters = preg_split("//u", $currentWord, -1, PREG_SPLIT_NO_EMPTY);
+//     //Прохожу конкретное слово посивмольно и проверяю на вхождение в нужное множество
+//     foreach ($currentLetters as $letter => $value) {
+//       //Проверка на 6 маску с неизвестной буквой
+//       if ($encryptedWords[$i][(int)$letter] === "6") {
+//         var_dump("ПОДХОДИТ по маске 6 = " .  $encryptedWords[$i][(int)$letter] . "<br>\n");
+//         //Проверка на тот случай, если 6 маска в конце слова
+//         if (!$currentLetters[$letter + 1]) {
+//           //Записываем в результирующий массив
+//           array_push($resultWords, $currentWord);
+//           var_dump("СЛОВО " . $currentWord . " ДОБАВЛЕНО В РЕЗУЛЬТИРУЮЩИЙ МАССИВ" . "<br>\n");
+//           var_dump("последний элемент" . "<br>\n");
+//         }
+//         continue;
+//       }
+//       if (strpos($claim[$encryptedWords[$i][(int)$letter] - 1], $value) !== false) {
+//         var_dump("ПОДХОДИТ");
+//         var_dump("Маска: " . $encryptedWords[$i][(int)$letter]);
+//         var_dump("Буквы: " . $claim[$encryptedWords[$i][(int)$letter] - 1]);
+//         var_dump("Текущий элемент: " . $value . " ; letter =" . $letter . "; входит в " . $claim[$encryptedWords[$i][(int)$letter] - 1] . "<br>\n");
+//       } else {
+//         var_dump("НЕТ ");
+//         var_dump("Маска: " . $encryptedWords[$i][(int)$letter]);
+//         var_dump("Буквы: " . $claim[$encryptedWords[$i][(int)$letter] - 1]);
+//         var_dump("Текущий элемент: " . $value . "; letter =" . $letter . "; не входит в " . $claim[$encryptedWords[$i][(int)$letter] - 1] . "<br>\n");
+//         break;
+//       }
+//       if (!$currentLetters[$letter + 1]) {
+//         //Записываем в результирующий массив
+//         array_push($resultWords[$i], $currentWord);
+//         var_dump("СЛОВО " . $currentWord . " ДОБАВЛЕНО В РЕЗУЛЬТИРУЮЩИЙ МАССИВ №" . $i . "<br>\n");
+//         var_dump("последний элемент" . "<br>\n");
+//       }
+//     }
+//   }
+//   // array_push($resultWords, "kek");
+//   var_dump("Результирующий массив №" . $i . ": " . $resultWords[$i]);
+//   foreach ($resultWords[$i] as $j => $v) {
+//     var_dump($v);
+//   }
+//   var_dump("<br>\n");
+// }
+
+// foreach ($resultWords as $e => $arr) {
+//   var_dump("Результирующий массив №" . $e + 1 . ": " . $arr);
+//   foreach ($arr as $j => $v) {
+//     var_dump($v);
+//   }
+//   var_dump("<br>\n");
+// }
 
 
 
