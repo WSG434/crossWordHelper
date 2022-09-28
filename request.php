@@ -34,8 +34,44 @@ $words = $myJson["words"];
 $current_word = $words[0];
 // var_dump(gettype($myJson));
 
-$html = str_get_html($response);
+// $html = str_get_html($response);
 
+
+//Полученные данные
+$data = [$data1, $data2, $data3, $data4, $data5];
+// $data1 = file_get_contents("https://poncy.ru/crossword/crossword-solve.jsn");
+$data1 = file_get_contents("./php.json");
+$data2 = file_get_contents("./php2.json");
+$data3 = file_get_contents("./php3.json");
+$data4 = file_get_contents("./php4.json");
+$data5 = file_get_contents("./php5.json");
+
+file_put_contents("data1.json", $data1); //сохраняю себе
+
+
+//Обрабатываю полученные данные и привожу к массиву
+$myJson = json_decode($data1, true);
+$words1 = $myJson["words"];
+
+
+// Начинаю обходить массив данных и ищу совпадения
+foreach ($words1 as $word => $letters) {
+  //Привожу строку к массиву символов
+  var_dump($letters . "<br>\n");
+  $arrStr = preg_split("//u", $letters, -1, PREG_SPLIT_NO_EMPTY);
+
+  foreach ($arrStr as $letter => $value) {
+    var_dump("Текущий элемент: " . $value . " Вот это char =" . $letter . "<br>\n");
+    if (!$arrStr[$char + 1]) {
+      var_dump("последний элемент");
+    }
+  }
+}
+
+
+
+//Массив загаданных слов
+$encryptedWords = ["1153241526", "1656335361", "5424251322", "3655516563", "4213633456"];
 
 //Массив заданных условием букв;
 $claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ"];
@@ -51,13 +87,59 @@ if (strpos($claim[0], $first_character) !== false) {
 };
 
 
+
+//Условие на проверку зашифрованного слова полное;
+
+
+$firstEncryptedWord = $encryptedWords[0];
+var_dump($firstEncryptedWord);
+$arrIntStr = preg_split("//u", $firstEncryptedWord, -1, PREG_SPLIT_NO_EMPTY);
+$firstEncryptedWordResult = [];
+
+foreach ($arrIntStr as $i => $value) {
+  var_dump((int)$value - 1);
+}
+
+
+//Беру массив данных по первому слову
+// foreach ($)
+
+
+
+
+
+
+
+
+
+
+
+
+//Добавить элемент в массив
+// Способ 1
+// $myArray[] = [1, 2, 3];
+// array_push($myArray, 4, 5);
+// array_push($myArray, [4, 5]);
+// Способ 2
+// $myArray[] = [4, 5];
+// $myArray[] = 6;
+// var_dump($myArray);
+
+// Приведение типов
+//$myTest = "123";//Строка
+//int($myTest); //Число
+
+
 //Перевод строки в массив символов
 $arrStr = preg_split("//u", $current_word, -1, PREG_SPLIT_NO_EMPTY);
-var_dump($arrStr . "<br>\n");
-var_dump($current_word . "<br>\n");
+// var_dump($arrStr . "<br>\n");
+// var_dump($current_word . "<br>\n");
 // $test = strlen($arrStr);
 $test = count($arrStr);
-var_dump($test . "<br>\n");
+// var_dump($test . "<br>\n");
+var_dump("<br>\n");
+var_dump("<br>\n");
+var_dump("<br>\n");
 
 
 //Перебор массива
