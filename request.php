@@ -1,22 +1,4 @@
 <?php
-
-// $opts = array(
-//   'http' =>
-//   array(
-//     'method'  => 'GET',
-//     'header'  => "Content-Type: text/xml\r\n" .
-//       "Authorization: Basic " . base64_encode("$https_user:$https_password") . "\r\n",
-//     'content' => $body,
-//     'timeout' => 60
-//   )
-// );
-
-// $context  = stream_context_create($opts);
-// $url = 'https://poncy.ru/crossword/?mask=%D0%B3----' . $https_server;
-// $result = file_get_contents($url, false, $context, -1, 40000);
-
-// echo $result;
-
 include_once 'simple_html_dom.php';
 
 
@@ -31,9 +13,8 @@ include_once 'simple_html_dom.php';
 $url = 'https://poncy.ru/crossword/crossword-solve.jsn';
 $req = '?mask=%D0%90---------&desc=';
 
-$words = $url . $req;
-
-// echo $words;
+$wordsURL = $url . $req;
+// echo $wordsURL;
 
 // Вариант 1 (работает)
 
@@ -49,16 +30,56 @@ $myJson = json_decode($response, true);
 // var_dump($myJson["words"]);
 
 $words = $myJson["words"];
-var_dump($words[1]);
+// var_dump($words[0]);
+$current_word = $words[0];
 // var_dump(gettype($myJson));
 
+$$html = str_get_html($response);
+
+$claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ"];
+// var_dump($claim[0]);
 
 
-$html = str_get_html($response);
+
+$first_character = mb_substr($current_word, 0, 1);
+
+// var_dump(mb_strlen($current_word));
+
+if (strpos($claim[0], $first_character) !== false) {
+  // var_dump($first_character . " входит в " . $claim[0]);
+};
+
+
+
+$arrStr = preg_split("//u", $current_word, -1, PREG_SPLIT_NO_EMPTY);
+var_dump($arrStr . "<br>\n");
+var_dump($current_word . "<br>\n");
+// $test = strlen($arrStr);
+$test = count($arrStr);
+var_dump($test . "<br>\n");
+
+
+foreach ($arrStr as $char => $v) {
+  // if (next($char) == true) {
+  //   var_dump($char);
+  // } else {
+  //   var_dump($char . " это последний элемент");
+  // }
+
+
+  var_dump("Текущий элемент: " . $v . " Вот это char =" . $char);
+  var_dump("Следующий элемент: " . $arrStr[$char + 1] . " и номер у него char = " . $char + 1 . "<br>\n");
+  var_dump($char);
+  if (!$arrStr[$char + 1]) {
+    var_dump("последний элемент");
+  }
+}
+ 
+
 
 // Пример массива
-$arr = [1, 2, 3, 4, 5];
-var_dump($arr[0]);
+// $arr = [1, 2, 3, 4, 5];
+// var_dump($arr[0]);
 // foreach ($arr as $value) {
 //   var_dump($value);
 // }
@@ -94,3 +115,14 @@ var_dump($arr[0]);
 // 3. Взять символ этой строки и проверить входит ли он в нужное множество
 // 3.1 Если входит, то все ок, переходим к следущей букве, если нет, то переходим к следующей строке
 // 3.2 Если следующей буквы нет, то записываем строку в массив результатов 
+
+//https://dwweb.ru/page/php/function/053_razbit_stroku_po_simvolam_php.html#paragraph_2
+
+/* 
+foreach($input as $key => $value) {
+    $ret .= "$value";
+    if (next($input)==true) $ret .= ",";
+}
+
+https://translated.turbopages.org/proxy_u/en-ru.ru.678cac81-63340895-097ad36d-74722d776562/https/stackoverflow.com/questions/665135/find-the-last-element-of-an-array-while-using-a-foreach-loop-in-php
+*/
