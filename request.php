@@ -2,11 +2,28 @@
 include_once 'simple_html_dom.php';
 
 
+
+function getData($url, $mask, $jsonName)
+{
+  $response = file_get_contents($url . $mask);
+  file_put_contents("./data/" . $jsonName, $response); //Возможная уязвимость, т.к. работа с путем
+  $myJson = json_decode($response, true);
+  // if ($myJson["count"]) {
+  //   $count = $myJson["count"]; //Проверка на количество элементов в JSON; За раз выгружается 500
+  // }
+  return $myJson["words"];
+};
+
+
+
+// Отправляю запрос за получение данных
+
 // https://poncy.ru/crossword/crossword-solve.jsn?mask=%D0%90---------
 // https://poncy.ru/crossword/next-result-page.json?mask=%D0%90---------&desc=&page=1
 // https://poncy.ru/crossword/next-result-page.json?mask=%D0%90---------&desc=&page=2
 
 // $url = 'https://poncy.ru/crossword/';
+// $url = "https://poncy.ru/crossword/crossword-solve.jsn?mask="
 // $req = '?mask=%D0%B3----';
 // $req = '?mask=А----';
 
@@ -29,6 +46,11 @@ $myJson = json_decode($response, true);
 // var_dump($myJson->{"words"});
 // var_dump($myJson["words"]);
 
+if ($myJson["count"]) {
+  $count = $myJson["count"];
+  var_dump($count);
+}
+
 $words = $myJson["words"];
 // var_dump($words[0]);
 $current_word = $words[0];
@@ -36,11 +58,15 @@ $current_word = $words[0];
 
 // $html = str_get_html($response);
 
+//--------------------------------------------------------------
+
+
 
 //Полученные данные
 $data = [$data1, $data2, $data3, $data4, $data5];
 // $data1 = file_get_contents("https://poncy.ru/crossword/crossword-solve.jsn");
 $data1 = file_get_contents("./data1.json");
+$data1_test = file_get_contents("./data1_test.json");
 $data2 = file_get_contents("./php2.json");
 $data3 = file_get_contents("./php3.json");
 $data4 = file_get_contents("./php4.json");
@@ -48,10 +74,19 @@ $data5 = file_get_contents("./php5.json");
 
 // file_put_contents("data1.json", $data1); //сохраняю себе
 
+//---------------------------------------------------------------------------------
 
 //Обрабатываю полученные данные и привожу к массиву
 $myJson = json_decode($data1, true);
 $words1 = $myJson["words"];
+
+
+//Слияние нескольких массивов; Загрузка и выгрузка JSON
+$words2 = array_merge($words2, $words1); //Соединяет два массива и больше, если надо
+file_put_contents("./merge.json", json_encode($words2)); //Сохраняю массив к себе; Как бы кэш свой такой;
+$merge_test = file_get_contents("./merge.json"); //Загружаю из json ранее сохраненные данные 
+$words1_merge = json_decode($merge_test, true); // Готовый к работе объединенный массив
+
 
 
 //Массив загаданных слов
@@ -198,7 +233,34 @@ foreach ($arrStr as $char => $v) {
     var_dump("последний элемент");
   }
 }
- 
+
+
+// Слияние массивов и JSON'ов;
+
+//Обрабатываю полученные данные и привожу к массиву
+// $myJson = json_decode($data1, true);
+// $words1 = $myJson["words"];
+
+// $myJson = json_decode($data1_test, true);
+// $words2 = $myJson["words"];
+
+// var_dump("Размер words1 " . count($words1));
+// var_dump("Размер words2 " . count($words2));
+// $words2 = array_merge($words2, $words1);
+// var_dump("Слитый массив words2 " . $words2 . " Его размер: " . count($words2));
+
+// // $myObj["words"] = $words2;
+// // $myObj["count"] = 167;
+// // file_put_contents("./merge.json", json_encode($myObj));
+// file_put_contents("./merge.json", json_encode($words2));
+
+// $merge_test = file_get_contents("./merge.json");
+// $myNewJson = json_decode($merge_test, true);
+// // $words1_test = $myNewJson["words"];
+// $words1_test = json_decode($merge_test, true);
+
+// var_dump("МОЙ НОВЫЙ МАССИВ: " . count($words1_test));
+
 
 
 // Пример массива
