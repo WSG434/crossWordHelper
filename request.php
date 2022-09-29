@@ -3,6 +3,7 @@ include_once 'simple_html_dom.php';
 
 
 //Функция получения данных;
+//Рекурсивная функция, которая собирает json в один массив слов;
 function getData($url = "", $mask = "", $count = 0, $i = 0)
 {
   $context = stream_context_create(
@@ -60,12 +61,18 @@ function getData($url = "", $mask = "", $count = 0, $i = 0)
 };
 
 //Рекурсивная функция, которая собирает json в один массив слов;
-$testABG = getData("https://poncy.ru/crossword/crossword-solve.jsn?mask=А------", "?mask=А------");
+// $testABG = getData("https://poncy.ru/crossword/crossword-solve.jsn?mask=А------", "?mask=А------");
 // $testABG = getData("https://poncy.ru/crossword/crossword-solve.jsn?mask=И------", "?mask=И------");
 // $testABG = getData("https://poncy.ru/crossword/crossword-solve.jsn?mask=Щ------", "?mask=Щ------");
-echo ("Размер итогового JSON: " . count($testABG) . "<br>\n"); //1689 должно быть 
-file_put_contents("./data/testABG.json", json_encode($testABG)); //Возможная уязвимость, т.к. работа с путем
+// echo ("Размер итогового JSON: " . count($testABG) . "<br>\n"); //1689 должно быть 
+// file_put_contents("./data/testABG.json", json_encode($testABG)); //Возможная уязвимость, т.к. работа с путем
 
+//Скачивает данные и сохраняет локально 
+function saveJSON($name, $url_withMask, $mask)
+{
+  $arr = getData($url_withMask, $mask);
+  file_put_contents("./data/" . $name . ".json", json_encode($arr)); //Возможная уязвимость, т.к. работа с путем
+}
 
 
 //Тест функции загрузки данных; Забанило в итоге;
@@ -196,6 +203,48 @@ function echoResult($result, $encryptedWord)
 
 // $words1 = json_decode($data1, true);
 
+//Массив заданных условием букв;
+$claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
+
+$allLeters = preg_split("//u", implode("", $claim), -1, PREG_SPLIT_NO_EMPTY);
+
+function getEncryptedWords()
+{
+};
+function createMask()
+{
+};
+function getDatabyClaim()
+{
+};
+
+
+//Скачиваю данные по конкретному набору букв; 
+$firstClaim = preg_split("//u", $claim[0], -1, PREG_SPLIT_NO_EMPTY);
+// foreach ($allLeters as $i => $letter) {
+$claimArr = [];
+foreach ($firstClaim as $i => $letter) {
+  // https://poncy.ru/crossword/crossword-solve.jsn?mask=%D0%90---------
+  $mask = "?mask=" . $letter . "---------";
+  $urlBase = "https://poncy.ru/crossword/crossword-solve.jsn";
+  $encryptedWordLength = "10";
+  $name = "newData" . $encryptedWordLength  . "." . $i + 1;
+  if (file_get_contents("./data/" . $name . ".json") !== false) {
+    echo ("Такой json уже есть, возьму его локально" . "<br>\n");
+  } else {
+    echo ("Загружаю json с сервера"  . "<br>\n");
+    // saveJSON($name, $urlBase . $mask, $mask); //Вот это обращение к внешнему серверу
+    $claimArr = array_merge($claimArr, getData($urlBase . $mask, $mask));
+  }
+  if (!$firstClaim[$i + 1]) {
+    file_put_contents("./data/" . $name . ".json", json_encode($claimArr));
+  }
+}
+
+
+
+
+
 $words1[0] = json_decode(file_get_contents("./data/data1.1.json"), true)["words"];
 $words1[1] = json_decode(file_get_contents("./data/data1.2.json"), true)["words"];
 $words1[2] = json_decode(file_get_contents("./data/data1.3.json"), true)["words"];
@@ -225,8 +274,7 @@ $encryptedWords = [
 ];
 
 
-//Массив заданных условием букв;
-$claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
+
 
 
 //Карта, которая связывает Наборы букв и Массивы слов, которые начинаются с этих букв
