@@ -110,7 +110,7 @@ $encryptedWords = [
 
 
 //Массив заданных условием букв;
-$claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ"];
+$claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
 
 
 
@@ -146,13 +146,7 @@ function findMatch($words, $claim, $encryptedWord)
   return $resultWords;
 }
 
-$myMap = [
-  $claim[0] => $words1,
-  $claim[1] => $words2,
-  $claim[2] => $words3,
-  $claim[3] => $words4,
-  $claim[4] => $words5
-];
+
 
 
 //Ищет слово по маске в заданном наборе букв; Передаем массив из 3 подмассивов на каждую букву;
@@ -173,6 +167,14 @@ function checkClaimWords($currentClaimWords, $encryptedWord, $claim = [])
 // function checkClaimWords(Конкретный_набор_букв, Конкретный_ШИФР, Все_наборы_БУКВ)
 
 // Нужно найти совпадение Первой_Буквы_ШИФРА и Конкретного_Набора_Букв
+
+$myMap = [
+  $claim[0] => $words1,
+  $claim[1] => $words2,
+  $claim[2] => $words3,
+  $claim[3] => $words4,
+  $claim[4] => $words5
+];
 
 function findCurrentClaim($claim, $encryptedWord)
 {
@@ -201,9 +203,36 @@ foreach ($encryptedWords as $e => $currentEncryptedWord) {
 
 
 //encryptedWords = масстив; зашифрованные слова
-  //encryptedWords[0] = первое код зашифрованного слова; 1153241526
-    //encryptedWords[0][0] = первый символ кода зашифрованного слова; 1
+//encryptedWords[0] = первое код зашифрованного слова; 1153241526
+//encryptedWords[0][0] = первый символ кода зашифрованного слова; 1
 //words1 - массив данных под первый тип букв; АВГ
-  //words1[0] - массив слов начинающихся на букву А
+//words1[0] - массив слов начинающихся на букву А
 //words2 - массив данных под второй тип букв; ЕИК
-  //words2[0] - массив слов начинающихся на букву Е
+//words2[0] - массив слов начинающихся на букву Е
+
+
+
+
+
+
+
+
+
+
+
+
+//Результирующее слово
+$encryptedWordResult = preg_split("//u", "111222333", -1, PREG_SPLIT_NO_EMPTY);
+
+
+$wordsR[0] = json_decode(file_get_contents("./data/dataResultC.json"), true)["words"];
+$wordsR[1] = json_decode(file_get_contents("./data/dataResultK.json"), true)["words"];
+$wordsR[2] = json_decode(file_get_contents("./data/dataResultU.json"), true)["words"];
+
+$claimNew = [$claim[1] . $claim[3] . $claim[4],  $claim[3] . $claim[2] . $claim[5], $claim[2] . $claim[3] . $claim[4]];
+
+// var_dump("<br>\n");
+// var_dump("ВОоооооооооооот здесь:" . $claimNew[0] . " " . $claimNew[1] . " " . $claimNew[2] . "<br>\n");
+
+
+checkClaimWords($wordsR, $encryptedWordResult, $claimNew);
