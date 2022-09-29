@@ -113,7 +113,7 @@ $encryptedWords = [
 $claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
 
 
-
+//Ищет совпадения в конкретном массиве слов с конкретным шифром
 function findMatch($words, $claim, $encryptedWord)
 {
   $resultWords = [];
@@ -132,8 +132,7 @@ function findMatch($words, $claim, $encryptedWord)
       }
 
       //Проверяем обычные буквы на вхождение в соответствуюущие множества
-      if (strpos($claim[$encryptedWord[(int)$letter] - 1], $value) !== false) {
-      } else {
+      if (strpos($claim[$encryptedWord[(int)$letter] - 1], $value) === false) {
         break;
       }
 
@@ -154,10 +153,15 @@ function checkClaimWords($currentClaimWords, $encryptedWord, $claim = [])
 {
   $resultWords = [];
   foreach ($currentClaimWords as $c => $currentLetterWords) {
-    var_dump("Результирующий массив: " . implode("", findMatch($currentLetterWords, $claim, $encryptedWord)));
-    var_dump("Текущий массив: " . $c . " Количество элементов: " . count($currentLetterWords) . "<br>\n");
+    $result = implode("", findMatch($currentLetterWords, $claim, $encryptedWord));
+    if ($result !== "") {
+      echo ("Шифр: " . implode("", $encryptedWord) . "; ");
+      echo ("Результирующий массив: " . $result . "; ");
+      echo ("Текущий массив: " . $c . " Количество элементов: " . count($currentLetterWords) . "<br>\n");
+      array_push($resultWords, $result);
+    }
   }
-  return;
+  return implode(", ", $resultWords);
 }
 
 // var_dump("Результирующий массив: " . implode("", findMatch($words4[2], $claim, $encryptedWords[4])));
@@ -168,7 +172,7 @@ function checkClaimWords($currentClaimWords, $encryptedWord, $claim = [])
 
 // Нужно найти совпадение Первой_Буквы_ШИФРА и Конкретного_Набора_Букв
 
-$myMap = [
+$claimMap = [
   $claim[0] => $words1,
   $claim[1] => $words2,
   $claim[2] => $words3,
@@ -195,7 +199,9 @@ function findCurrentClaim($claim, $encryptedWord)
 // var_dump(findCurrentClaim($claim, $encryptedWords[0]));
 // var_dump($myMap[findCurrentClaim($claim, $encryptedWords[0])]);
 foreach ($encryptedWords as $e => $currentEncryptedWord) {
-  checkClaimWords($myMap[findCurrentClaim($claim, $currentEncryptedWord)], $currentEncryptedWord, $claim);
+  $needClaim = findCurrentClaim($claim, $currentEncryptedWord);
+  $result = checkClaimWords($claimMap[$needClaim], $currentEncryptedWord, $claim);
+  checkResult($result, $currentEncryptedWord);
 }
 
 // Вызов функции
@@ -222,17 +228,29 @@ foreach ($encryptedWords as $e => $currentEncryptedWord) {
 
 
 //Результирующее слово
+
+//шифр
 $encryptedWordResult = preg_split("//u", "111222333", -1, PREG_SPLIT_NO_EMPTY);
 
-
+//данные
 $wordsR[0] = json_decode(file_get_contents("./data/dataResultC.json"), true)["words"];
 $wordsR[1] = json_decode(file_get_contents("./data/dataResultK.json"), true)["words"];
 $wordsR[2] = json_decode(file_get_contents("./data/dataResultU.json"), true)["words"];
 
-$claimNew = [$claim[1] . $claim[3] . $claim[4],  $claim[3] . $claim[2] . $claim[5], $claim[2] . $claim[3] . $claim[4]];
-
-// var_dump("<br>\n");
-// var_dump("ВОоооооооооооот здесь:" . $claimNew[0] . " " . $claimNew[1] . " " . $claimNew[2] . "<br>\n");
+//буквы
+$claimNew = [$claim[1] . $claim[3] . $claim[4],  $claim[2] . $claim[3] . $claim[5], $claim[2] . $claim[3] . $claim[4]];
 
 
-checkClaimWords($wordsR, $encryptedWordResult, $claimNew);
+$finalResult = checkClaimWords($wordsR, $encryptedWordResult, $claimNew);
+checkResult($finalResult, $encryptedWordResult);
+
+
+//Функция для вывода результата;
+function checkResult($result, $encryptedWord)
+{
+  if ($result !== "") {
+    echo ("Результат: " . $result . " Шифр: " . implode("", $encryptedWord) . "<br>\n");
+  } else {
+    echo ("К сожалению, слово №"  . " Шифр: " . implode("", $encryptedWord) .  " не найдено;" . "<br>\n");
+  }
+}
