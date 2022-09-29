@@ -3,12 +3,8 @@ include_once 'simple_html_dom.php';
 
 
 //Функция получения данных;
-function getData($url = "", $mask = "", $count = 0, $arr_words = [], $i = 0)
+function getData($url = "", $mask = "", $count = 0, $i = 0)
 {
-  //Отправили запрос, получили ответ
-  $response = file_get_contents($url);
-  $myJson = json_decode($response, true);
-
   $context = stream_context_create(
     array(
       "http" => array(
@@ -16,44 +12,60 @@ function getData($url = "", $mask = "", $count = 0, $arr_words = [], $i = 0)
       )
     )
   );
-
   // echo file_get_contents("https://www.google.com/", false, $context);
 
 
+  //Отправили запрос, получили ответ
+  $response = file_get_contents($url, false, $context);
+  $myJson = json_decode($response, true);
 
-  if ($myJson["count"]) {
+
+  if ($myJson["count"] && $myJson["count"] !== "-") {
     $count = $myJson["count"]; //Проверка на количество элементов в JSON; За раз выгружается 500
     var_dump("Записал в count: " . $count . "<br>\n");
   }
 
-  $words  = array_merge($arr_words, $myJson["words"]); //Сливаю два массива
-  var_dump("Текущий размер words: " . count($words) . "<br>\n");
+
+  // var_dump("Текущий размер переданного words: " . count($arr_words) . "<br>\n");
   var_dump("Текущая иттерация: " . $i . "<br>\n");
   var_dump("Текущая count: " . $count . "<br>\n");
+  var_dump("Текущий url: " . $url . "<br>\n");
+  var_dump("Текущий myJson: " . count($myJson["words"]) . "<br>\n");
 
   if ($count - 500 > 0) {
     $i++;
-    if ($i > 10) {
+    if ($i > 4) {
+      echo ("Запросов больше чем 3");
       return;
     }
     $count -= 500;
     var_dump("Текущая запрос: " . "https://poncy.ru/crossword/next-result-page.json" . $mask . "&desc=&page=" . $i . "<br>\n");
     sleep(5);
-    getData("https://poncy.ru/crossword/next-result-page.json" . $mask . "&desc=&page=" . $i, $mask, $count, $words, $i);
-  } else {
+    $array_from_recursion = getData("https://poncy.ru/crossword/next-result-page.json" . $mask . "&desc=&page=" . $i, $mask, $count, $i);
+
+    echo ("Размер текущего words до слияния в этой иттерации: " . count($myJson["words"]) . "<br>\n");
+    echo ("Размер массива array_from_recursion до слияния в этой иттерации: " . count($array_from_recursion) . "<br>\n");
+
+    $words = array_merge($myJson["words"], $array_from_recursion); //Сливаю два массива
+
+    echo ("Размер words после слияния в этой иттерации: " . count($words) . "<br>\n");
+
+
     return $words;
+  } else {
+    echo ("Я сюда зашел и тут смотрю на myJson: " . count($myJson["words"]) . "<br>\n");
+    echo ("Я сюда зашел и тут смотрю на myJson: " . implode(", ", $myJson["words"]) . "<br>\n");
+    return $myJson["words"];
   }
 };
 
+//Рекурсивная функция, которая собирает json в один массив слов;
+$testABG = getData("https://poncy.ru/crossword/crossword-solve.jsn?mask=А------", "?mask=А------");
+// $testABG = getData("https://poncy.ru/crossword/crossword-solve.jsn?mask=И------", "?mask=И------");
+// $testABG = getData("https://poncy.ru/crossword/crossword-solve.jsn?mask=Щ------", "?mask=Щ------");
+echo ("Размер итогового JSON: " . count($testABG) . "<br>\n"); //1689 должно быть 
+file_put_contents("./data/testABG.json", json_encode($testABG)); //Возможная уязвимость, т.к. работа с путем
 
-// $context = stream_context_create(
-//   array(
-//     "http" => array(
-//       "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
-//     )
-//   )
-// );
-// echo file_get_contents("https://www.google.com/", false, $context);
 
 
 //Тест функции загрузки данных; Забанило в итоге;
@@ -176,6 +188,7 @@ function echoResult($result, $encryptedWord)
 
 //-----------------------------
 
+// Слова по горизонтали
 
 //Получаю данные в JSON, обрабатываю их и привожу к массиву;
 // $myJson = json_decode($data1, true);
