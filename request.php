@@ -9,6 +9,18 @@ function getData($url = "", $mask = "", $count = 0, $arr_words = [], $i = 0)
   $response = file_get_contents($url);
   $myJson = json_decode($response, true);
 
+  $context = stream_context_create(
+    array(
+      "http" => array(
+        "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
+      )
+    )
+  );
+
+  // echo file_get_contents("https://www.google.com/", false, $context);
+
+
+
   if ($myJson["count"]) {
     $count = $myJson["count"]; //Проверка на количество элементов в JSON; За раз выгружается 500
     var_dump("Записал в count: " . $count . "<br>\n");
@@ -32,6 +44,16 @@ function getData($url = "", $mask = "", $count = 0, $arr_words = [], $i = 0)
     return $words;
   }
 };
+
+
+// $context = stream_context_create(
+//   array(
+//     "http" => array(
+//       "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
+//     )
+//   )
+// );
+// echo file_get_contents("https://www.google.com/", false, $context);
 
 
 //Тест функции загрузки данных; Забанило в итоге;
@@ -68,52 +90,46 @@ function getData($url = "", $mask = "", $count = 0, $arr_words = [], $i = 0)
 //---------------------------------------------------------------------------------
 
 
-//Получаю данные в JSON, обрабатываю их и привожу к массиву;
-// $myJson = json_decode($data1, true);
-// $words1 = $myJson["words"];
+//Находит нужный массив с данными
+function findCurrentClaim($claim, $encryptedWord)
+{
+  switch ($encryptedWord[0]) {
+    case 1:
+      return $claim[0];
+    case 2:
+      return $claim[1];
+    case 3:
+      return $claim[2];
+    case 4:
+      return $claim[3];
+    case 5:
+      return $claim[4];
+    case 6:
+      return $claim[5];
+  }
+}
 
-// $words1 = json_decode($data1, true);
-$words1[0] = json_decode(file_get_contents("./data/data1.1.json"), true)["words"];
-$words1[1] = json_decode(file_get_contents("./data/data1.2.json"), true)["words"];
-$words1[2] = json_decode(file_get_contents("./data/data1.3.json"), true)["words"];
-$words2[0] = json_decode(file_get_contents("./data/data2.1.json"), true)["words"];
-$words2[1] = json_decode(file_get_contents("./data/data2.2.json"), true)["words"];
-$words2[2] = json_decode(file_get_contents("./data/data2.3.json"), true)["words"];
-$words3[0] = json_decode(file_get_contents("./data/data3.1.json"), true)["words"];
-$words3[1] = json_decode(file_get_contents("./data/data3.2.json"), true)["words"];
-$words3[2] = json_decode(file_get_contents("./data/data3.3.json"), true)["words"];
-$words4[0] = json_decode(file_get_contents("./data/data4.1.json"), true)["words"];
-$words4[1] = json_decode(file_get_contents("./data/data4.2.json"), true)["words"];
-$words4[2] = json_decode(file_get_contents("./data/data4.3.json"), true)["words"];
-$words5[0] = json_decode(file_get_contents("./data/data5.1.json"), true)["words"];
-$words5[1] = json_decode(file_get_contents("./data/data5.2.json"), true)["words"];
-$words5[2] = json_decode(file_get_contents("./data/data5.3.json"), true)["words"];
+//Ищет слово по заданному шифру в заданном наборе букв; Передаем массив из 3 подмассивов на каждую букву; 
+//Принимает конкретный массив на конкретный набор букв, Конкретный шифр слова, Массив из всех наборов букв 
+//Возвращает массив подходящих по шифру слов с 3 массивов слов по одному Набору букв
+function checkClaimWords($currentClaimWords, $encryptedWord, $claim)
+{
+  $resultWords = [];
+  foreach ($currentClaimWords as $c => $currentLetterWords) {
+    $result = implode(", ", findMatch($currentLetterWords, $claim, $encryptedWord));
+    if ($result !== "") {
+      // echo ("Шифр: " . implode("", $encryptedWord) . "; ");
+      // echo ("Результирующий массив: " . $result . "; ");
+      // echo ("Текущий массив: " . $c . " Количество элементов: " . count($currentLetterWords) . "<br>\n");
+      array_push($resultWords, $result);
+    }
+  }
+  return implode(", ", $resultWords);
+}
 
-$words = [$words1, $words2, $words3, $words4, $words5];
-
-
-
-//Массив загаданных слов
-// $encryptedWords = ["1153241526", "1656335361", "5424251322", "3655516563", "4213633456"];
-
-//Перевожу их в массив символов, чтобы можно было работать с масками
-$encryptedWords = [
-  $word1 = preg_split("//u", "1153241526", -1, PREG_SPLIT_NO_EMPTY),
-  $word2 = preg_split("//u", "1656335361", -1, PREG_SPLIT_NO_EMPTY),
-  $word3 = preg_split("//u", "5424251322", -1, PREG_SPLIT_NO_EMPTY),
-  $word4 = preg_split("//u", "3655516563", -1, PREG_SPLIT_NO_EMPTY),
-  $word5 = preg_split("//u", "4213633456", -1, PREG_SPLIT_NO_EMPTY),
-];
-
-// $crypt = implode("", $encryptedWords[0]); // Собирает всю строку из массива симоволов
-// $encryptedWords = preg_split("//u", "1153241526", -1, PREG_SPLIT_NO_EMPTY); // Разбирает всю строку на массив символов
-
-
-//Массив заданных условием букв;
-$claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
-
-
-//Ищет совпадения в конкретном массиве слов с конкретным шифром
+//Ищет совпадения в конкретном массиве слов с конкретным шифром; 
+//Принимает конкретный массив слов на конкретную букву, Набор всех букв, Конкретный шифр слова
+//Возвращает массив подходящих по шифру слов с текущего массива слов
 function findMatch($words, $claim, $encryptedWord)
 {
   $resultWords = [];
@@ -145,33 +161,62 @@ function findMatch($words, $claim, $encryptedWord)
   return $resultWords;
 }
 
-
-
-
-//Ищет слово по маске в заданном наборе букв; Передаем массив из 3 подмассивов на каждую букву;
-function checkClaimWords($currentClaimWords, $encryptedWord, $claim = [])
+//Вывод результата;
+function echoResult($result, $encryptedWord)
 {
-  $resultWords = [];
-  foreach ($currentClaimWords as $c => $currentLetterWords) {
-    $result = implode("", findMatch($currentLetterWords, $claim, $encryptedWord));
-    if ($result !== "") {
-      echo ("Шифр: " . implode("", $encryptedWord) . "; ");
-      echo ("Результирующий массив: " . $result . "; ");
-      echo ("Текущий массив: " . $c . " Количество элементов: " . count($currentLetterWords) . "<br>\n");
-      array_push($resultWords, $result);
-    }
+  if ($result !== "") {
+    echo ("Результат: " . $result . " Шифр: " . implode("", $encryptedWord) . "<br>\n");
+    return true;
+  } else {
+    echo ("К сожалению, слово "  . " Шифр: " . implode("", $encryptedWord) .  " не найдено;" . "<br>\n");
+    return false;
   }
-  return implode(", ", $resultWords);
 }
 
-// var_dump("Результирующий массив: " . implode("", findMatch($words4[2], $claim, $encryptedWords[4])));
 
-// var_dump("Результирующий массив: " . implode("", findMatch(Конкретный_Набор_БУКВ[Конректная_буква], Все_наборы_БУКВ, Массив_ШИФРОВ[Конкретный_ШИФР])));
+//-----------------------------
 
-// function checkClaimWords(Конкретный_набор_букв, Конкретный_ШИФР, Все_наборы_БУКВ)
 
-// Нужно найти совпадение Первой_Буквы_ШИФРА и Конкретного_Набора_Букв
+//Получаю данные в JSON, обрабатываю их и привожу к массиву;
+// $myJson = json_decode($data1, true);
+// $words1 = $myJson["words"];
 
+// $words1 = json_decode($data1, true);
+
+$words1[0] = json_decode(file_get_contents("./data/data1.1.json"), true)["words"];
+$words1[1] = json_decode(file_get_contents("./data/data1.2.json"), true)["words"];
+$words1[2] = json_decode(file_get_contents("./data/data1.3.json"), true)["words"];
+$words2[0] = json_decode(file_get_contents("./data/data2.1.json"), true)["words"];
+$words2[1] = json_decode(file_get_contents("./data/data2.2.json"), true)["words"];
+$words2[2] = json_decode(file_get_contents("./data/data2.3.json"), true)["words"];
+$words3[0] = json_decode(file_get_contents("./data/data3.1.json"), true)["words"];
+$words3[1] = json_decode(file_get_contents("./data/data3.2.json"), true)["words"];
+$words3[2] = json_decode(file_get_contents("./data/data3.3.json"), true)["words"];
+$words4[0] = json_decode(file_get_contents("./data/data4.1.json"), true)["words"];
+$words4[1] = json_decode(file_get_contents("./data/data4.2.json"), true)["words"];
+$words4[2] = json_decode(file_get_contents("./data/data4.3.json"), true)["words"];
+$words5[0] = json_decode(file_get_contents("./data/data5.1.json"), true)["words"];
+$words5[1] = json_decode(file_get_contents("./data/data5.2.json"), true)["words"];
+$words5[2] = json_decode(file_get_contents("./data/data5.3.json"), true)["words"];
+
+
+
+//Массив шифров
+$encryptedWords = [
+  //Перевожу их в массив символов, чтобы можно было работать с масками
+  $encryptedWord1 = preg_split("//u", "1153241526", -1, PREG_SPLIT_NO_EMPTY),
+  $encryptedWord2 = preg_split("//u", "1656335361", -1, PREG_SPLIT_NO_EMPTY),
+  $encryptedWord3 = preg_split("//u", "5424251322", -1, PREG_SPLIT_NO_EMPTY),
+  $encryptedWord4 = preg_split("//u", "3655516563", -1, PREG_SPLIT_NO_EMPTY),
+  $encryptedWord5 = preg_split("//u", "4213633456", -1, PREG_SPLIT_NO_EMPTY),
+];
+
+
+//Массив заданных условием букв;
+$claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
+
+
+//Карта, которая связывает Наборы букв и Массивы слов, которые начинаются с этих букв
 $claimMap = [
   $claim[0] => $words1,
   $claim[1] => $words2,
@@ -180,45 +225,87 @@ $claimMap = [
   $claim[4] => $words5
 ];
 
-function findCurrentClaim($claim, $encryptedWord)
-{
-  switch ($encryptedWord[0]) {
-    case 1:
-      return $claim[0];
-    case 2:
-      return $claim[1];
-    case 3:
-      return $claim[2];
-    case 4:
-      return $claim[3];
-    case 5:
-      return $claim[4];
-  }
-}
 
-// var_dump(findCurrentClaim($claim, $encryptedWords[0]));
-// var_dump($myMap[findCurrentClaim($claim, $encryptedWords[0])]);
+echo ("Слова по горизонтали:" . "<br>\n");
+
+// Вызов функции
 foreach ($encryptedWords as $e => $currentEncryptedWord) {
   $needClaim = findCurrentClaim($claim, $currentEncryptedWord);
   $result = checkClaimWords($claimMap[$needClaim], $currentEncryptedWord, $claim);
-  checkResult($result, $currentEncryptedWord);
+  echo ("Слово №: " . ($e + 1) . " ");
+  // echo ("Результирующий массив: " . $result . "; " . "<br>\n");
+
+  echoResult($result, $currentEncryptedWord);
 }
 
-// Вызов функции
-// checkClaimWords($myMap[findCurrentClaim($claim, $encryptedWords[0])], $encryptedWord[0], $claim);
-
-
-//encryptedWords = масстив; зашифрованные слова
-//encryptedWords[0] = первое код зашифрованного слова; 1153241526
-//encryptedWords[0][0] = первый символ кода зашифрованного слова; 1
-//words1 - массив данных под первый тип букв; АВГ
-//words1[0] - массив слов начинающихся на букву А
-//words2 - массив данных под второй тип букв; ЕИК
-//words2[0] - массив слов начинающихся на букву Е
 
 
 
 
+
+
+
+//Вертикальные слова
+
+//Массивы в словами на нужные буквы
+$verticalWords1[0] = json_decode(file_get_contents("./data/data5A.json"), true)["words"];
+$verticalWords1[1] = json_decode(file_get_contents("./data/data5V.json"), true)["words"];
+$verticalWords1[2] = json_decode(file_get_contents("./data/data5G.json"), true)["words"];
+$verticalWords2[0] = json_decode(file_get_contents("./data/data5E.json"), true)["words"];
+$verticalWords2[1] = json_decode(file_get_contents("./data/data5I.json"), true)["words"];
+$verticalWords2[2] = json_decode(file_get_contents("./data/data5K.json"), true)["words"];
+$verticalWords3[0] = json_decode(file_get_contents("./data/data5L.json"), true)["words"];
+$verticalWords3[1] = json_decode(file_get_contents("./data/data5N.json"), true)["words"];
+$verticalWords3[2] = json_decode(file_get_contents("./data/data5O.json"), true)["words"];
+$verticalWords4[0] = json_decode(file_get_contents("./data/data5P.json"), true)["words"];
+$verticalWords4[1] = json_decode(file_get_contents("./data/data5R.json"), true)["words"];
+$verticalWords4[2] = json_decode(file_get_contents("./data/data5S.json"), true)["words"];
+$verticalWords5[0] = json_decode(file_get_contents("./data/data5T.json"), true)["words"];
+$verticalWords5[1] = json_decode(file_get_contents("./data/data5U.json"), true)["words"];
+$verticalWords5[2] = json_decode(file_get_contents("./data/data5SH.json"), true)["words"];
+$verticalWords6[0] = json_decode(file_get_contents("./data/data5YA.json"), true)["words"];
+
+//
+
+//Массив шифров
+$verticalEncryptedWords = [
+  //Перевожу их в массив символов, чтобы можно было работать с масками
+  $encryptedWord1 = preg_split("//u", "11534", -1, PREG_SPLIT_NO_EMPTY),
+  $encryptedWord2 = preg_split("//u", "16462", -1, PREG_SPLIT_NO_EMPTY),
+  $encryptedWord3 = preg_split("//u", "55251", -1, PREG_SPLIT_NO_EMPTY),
+  $encryptedWord4 = preg_split("//u", "36453", -1, PREG_SPLIT_NO_EMPTY),
+  $encryptedWord5 = preg_split("//u", "23256", -1, PREG_SPLIT_NO_EMPTY),
+  $encryptedWord6 = preg_split("//u", "43513", -1, PREG_SPLIT_NO_EMPTY),
+  $encryptedWord7 = preg_split("//u", "15163", -1, PREG_SPLIT_NO_EMPTY),
+  $encryptedWord8 = preg_split("//u", "53354", -1, PREG_SPLIT_NO_EMPTY),
+  $encryptedWord9 = preg_split("//u", "26265", -1, PREG_SPLIT_NO_EMPTY),
+  $encryptedWord10 = preg_split("//u", "61236", -1, PREG_SPLIT_NO_EMPTY)
+];
+
+
+//Карта, которая связывает Наборы букв и Массивы слов, которые начинаются с этих букв
+$verticalClaimMap = [
+  $claim[0] => $verticalWords1,
+  $claim[1] => $verticalWords2,
+  $claim[2] => $verticalWords3,
+  $claim[3] => $verticalWords4,
+  $claim[4] => $verticalWords5,
+  $claim[5] => $verticalWords6
+];
+
+
+echo ("<br>\n");
+echo ("Слова по вертикали:" . "<br>\n");
+
+foreach ($verticalEncryptedWords as $e => $currentEncryptedWord) {
+  $needClaim = findCurrentClaim($claim, $currentEncryptedWord);
+  // echo ("Шифр: " . implode("", $currentEncryptedWord) . " Claim = " . $needClaim . "<br>\n");
+
+  $result = checkClaimWords($verticalClaimMap[$needClaim], $currentEncryptedWord, $claim);
+  echo ("Слово №: " . ($e + 1) . " ");
+  // echo ("Результирующий массив: " . $result . "; " . "<br>\n");
+  echoResult($result, $currentEncryptedWord);
+}
 
 
 
@@ -242,15 +329,27 @@ $claimNew = [$claim[1] . $claim[3] . $claim[4],  $claim[2] . $claim[3] . $claim[
 
 
 $finalResult = checkClaimWords($wordsR, $encryptedWordResult, $claimNew);
-checkResult($finalResult, $encryptedWordResult);
+
+echo ("<br>\n");
+echo ("Финальное слово: " . "<br>\n");
+echoResult($finalResult, $encryptedWordResult);
 
 
-//Функция для вывода результата;
-function checkResult($result, $encryptedWord)
-{
-  if ($result !== "") {
-    echo ("Результат: " . $result . " Шифр: " . implode("", $encryptedWord) . "<br>\n");
-  } else {
-    echo ("К сожалению, слово №"  . " Шифр: " . implode("", $encryptedWord) .  " не найдено;" . "<br>\n");
-  }
-}
+
+
+
+
+//Логика
+
+//encryptedWords = масстив; зашифрованные слова
+  //encryptedWords[0] = первое код зашифрованного слова; 1153241526
+    //encryptedWords[0][0] = первый символ кода зашифрованного слова; 1
+//words1 - массив данных под первый тип букв; АВГ
+  //words1[0] - массив слов начинающихся на букву А
+//words2 - массив данных под второй тип букв; ЕИК
+  //words2[0] - массив слов начинающихся на букву Е
+  
+// var_dump("Результирующий массив: " . implode("", findMatch($words4[2], $claim, $encryptedWords[4])));
+// var_dump("Результирующий массив: " . implode("", findMatch(Конкретный_Набор_БУКВ[Конректная_буква], Все_наборы_БУКВ, Массив_ШИФРОВ[Конкретный_ШИФР])));
+// function checkClaimWords(Конкретный_набор_букв, Конкретный_ШИФР, Все_наборы_БУКВ)
+// Нужно найти совпадение Первой_Буквы_ШИФРА и Конкретного_Набора_Букв
