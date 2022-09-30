@@ -231,7 +231,6 @@ function translit($value)
 //Массив заданных условием букв;
 $claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
 
-$allLeters = preg_split("//u", implode("", $claim), -1, PREG_SPLIT_NO_EMPTY);
 
 function getEncryptedWords()
 {
@@ -256,7 +255,7 @@ function getAllClaimData($claim, $encryptedWordLength = "0")
       // https://poncy.ru/crossword/crossword-solve.jsn?mask=%D0%90---------
       $mask = "?mask=" . $letter . "---------";
       $urlBase = "https://poncy.ru/crossword/crossword-solve.jsn";
-      $encryptedWordLength = "10";
+      // $encryptedWordLength = "10";
       $name = "newData" . $encryptedWordLength  . "." . $i + 1 . "." . $j + 1;
       //Проверка на то, есть ли уже такой json
       if (file_get_contents("./data/" . $name . ".json") !== false) {
@@ -455,21 +454,98 @@ echo ("Финальное слово: " . "<br>\n");
 echoResult($finalResult, $encryptedWordResult);
 
 
-
-
+// getAllClaimData((array)$claimNew[0], "9"); //Как бы я вывел результирующее слово
 
 
 //Логика
 
 //encryptedWords = масстив; зашифрованные слова
-  //encryptedWords[0] = первое код зашифрованного слова; 1153241526
-    //encryptedWords[0][0] = первый символ кода зашифрованного слова; 1
+//encryptedWords[0] = первое код зашифрованного слова; 1153241526
+//encryptedWords[0][0] = первый символ кода зашифрованного слова; 1
 //words1 - массив данных под первый тип букв; АВГ
-  //words1[0] - массив слов начинающихся на букву А
+//words1[0] - массив слов начинающихся на букву А
 //words2 - массив данных под второй тип букв; ЕИК
-  //words2[0] - массив слов начинающихся на букву Е
-  
+//words2[0] - массив слов начинающихся на букву Е
+
 // var_dump("Результирующий массив: " . implode("", findMatch($words4[2], $claim, $encryptedWords[4])));
 // var_dump("Результирующий массив: " . implode("", findMatch(Конкретный_Набор_БУКВ[Конректная_буква], Все_наборы_БУКВ, Массив_ШИФРОВ[Конкретный_ШИФР])));
 // function checkClaimWords(Конкретный_набор_букв, Конкретный_ШИФР, Все_наборы_БУКВ)
 // Нужно найти совпадение Первой_Буквы_ШИФРА и Конкретного_Набора_Букв
+
+
+
+
+
+
+
+//Подход №2
+
+// Исходные данные
+
+// $POST = {
+// Массив из зашифрованных слов
+// Наборы букв
+// Позиции букв для Результирующего слова; Шифр Результирующего зашифрованного слова
+// }
+
+$resultArr = [
+  [1, 1, 5, 3, 2, 4, 1, 5, 2, 6],
+  [1, 6, 5, 6, 3, 3, 5, 3, 6, 1],
+  [5, 4, 2, 4, 2, 5, 1, 3, 2, 2],
+  [3, 6, 5, 5, 5, 1, 6, 5, 6, 3],
+  [4, 2, 1, 3, 6, 3, 3, 4, 5, 6],
+];
+
+$claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
+
+
+// $finalWord = [
+//   $resultArr[0][4], $resultArr[1][6], $resultArr[2][1],
+//   $resultArr[2][3], $resultArr[3][0], $resultArr[3][3],
+//   $resultArr[3][9], $resultArr[4][7], $resultArr[4][9]
+// ];
+// echo (implode("", $finalWord));
+
+
+$finalWordpart1 = [
+  $resultArr[0][4], $resultArr[1][6], $resultArr[2][1]
+];
+
+$finalWordpart2 = [
+  $resultArr[2][3], $resultArr[3][0], $resultArr[3][3]
+];
+
+$finalWordpart3 = [
+  $resultArr[3][9], $resultArr[4][7], $resultArr[4][9]
+];
+
+$finalWord = [
+  $finalWordpart1, $finalWordpart2, $finalWordpart3
+];
+
+
+
+
+//------------------------------------------------------------------------------------------------------------------- 
+
+// Функции
+
+//Собирает Набор букв для Результирующего слова
+function getFinalClaim($resultArr)
+{
+  $finalWordpart1 = [
+    $resultArr[0][4], $resultArr[1][6], $resultArr[2][1]
+  ];
+
+  $finalWordpart2 = [
+    $resultArr[2][3], $resultArr[3][0], $resultArr[3][3]
+  ];
+
+  $finalWordpart3 = [
+    $resultArr[3][9], $resultArr[4][7], $resultArr[4][9]
+  ];
+
+  $finalClaim = [implode("", $finalWordpart1), implode("", $finalWordpart2), implode("", $finalWordpart3)];
+  // echo (implode("", $finalClaim));
+  return $finalClaim;
+}
