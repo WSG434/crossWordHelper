@@ -591,9 +591,7 @@ echo ("Слова по горизонтали:" . "<br>\n");
 //Переделанный вызов
 
 
-
-
-//Слова по вертикали
+//Слова по горизонтали
 for ($i = 0; $i < count($resultArr); $i++) {
   $encryptedWordCurrent = $resultArr[$i];
   $encryptedWord = $encryptedWords[$i];
@@ -602,7 +600,7 @@ for ($i = 0; $i < count($resultArr); $i++) {
     echo ("Найден шифр с открытыми буквами: " . implode("", $encryptedWordCurrent) . "<br>\n");
     $mask = getMask($encryptedWordCurrent);
     echo ("Сгенерирована маска: " . $mask . "<br>\n");
-    $words = getData($url . $mask, $mask); //отправка запроса на сервер
+    // $words = getData($url . $mask, $mask); //отправка запроса на сервер
     // $words = json_decode(file_get_contents("./data/maskedJSON.json"), true); //чтение локально
     $result = findMatch($words, $claim, $encryptedWord);
   } else {
@@ -611,7 +609,7 @@ for ($i = 0; $i < count($resultArr); $i++) {
     foreach ($needClaim as $k => $currentLetter) {
       $mask = createMask($currentLetter, count($encryptedWord));
       echo ("Маска: " . $mask . "<br>\n");
-      $words = getData($url . $mask, $mask); //отправка запроса на сервер
+      // $words = getData($url . $mask, $mask); //отправка запроса на сервер
       $result = findMatch($words, $claim, $encryptedWord);
     }
   }
@@ -627,8 +625,71 @@ for ($i = 0; $i < count($resultArr); $i++) {
   }
 }
 
+
+
+
+
+
+
+
+//Слова по вертикали
+
+
+
+function getVerticalWord($numberOfWord, $arr)
+{
+  $result = [];
+  for ($i = 0; $i < count($arr); $i++) {
+    array_push($result, $arr[$i][$numberOfWord]);
+    echo ($arr[$i][$numberOfWord]);
+  }
+  return $result;
+}
+
+
+
+$countWords = count($resultArr[0]);
+for ($i = 0; $i < $countWords; $i++) {
+  echo ("Шифр: ");
+  getVerticalWord($i, $encryptedWords);
+  echo ("; Значение из массива: ");
+  getVerticalWord($i, $resultArr);
+  echo ("<br>\n");
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 viewHorizontalResult($resultArr);
 viewVerticalResult($resultArr);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //Отобразить горизонтальные слова;
@@ -668,7 +729,7 @@ function checkLetters($word)
   return preg_match('/[\p{L&}]/', $word) ? true : false;
 }
 
-//Генерация маски
+//Генерация маски исходя из текущего состояния массива
 function getMask($word)
 {
   foreach ($word as $w => $letter) {
@@ -679,6 +740,7 @@ function getMask($word)
   return implode("", $word);
 }
 
+//Создание маски для перебора
 function createMask($letter, $count)
 {
   $mask = "" . $letter;
