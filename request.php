@@ -68,7 +68,7 @@ function getData($url = "", $mask = "", $count = 0, $i = 0)
 // file_put_contents("./data/testABG.json", json_encode($testABG)); //Возможная уязвимость, т.к. работа с путем
 
 //Скачивает данные и сохраняет локально 
-function saveJSON($name, $url_withMask, $mask)
+function cacheJSON($name, $url_withMask, $mask)
 {
   $arr = getData($url_withMask, $mask);
   file_put_contents("./data/" . $name . ".json", json_encode($arr)); //Возможная уязвимость, т.к. работа с путем
@@ -193,6 +193,31 @@ function echoResult($result, $encryptedWord)
 }
 
 
+//Транслит русских букв
+function translit($value)
+{
+  $converter = array(
+    'а' => 'a',    'б' => 'b',    'в' => 'v',    'г' => 'g',    'д' => 'd',
+    'е' => 'e',    'ё' => 'e',    'ж' => 'zh',   'з' => 'z',    'и' => 'i',
+    'й' => 'y',    'к' => 'k',    'л' => 'l',    'м' => 'm',    'н' => 'n',
+    'о' => 'o',    'п' => 'p',    'р' => 'r',    'с' => 's',    'т' => 't',
+    'у' => 'u',    'ф' => 'f',    'х' => 'h',    'ц' => 'c',    'ч' => 'ch',
+    'ш' => 'sh',   'щ' => 'sch',  'ь' => '',     'ы' => 'y',    'ъ' => '',
+    'э' => 'e',    'ю' => 'yu',   'я' => 'ya',
+
+    'А' => 'A',    'Б' => 'B',    'В' => 'V',    'Г' => 'G',    'Д' => 'D',
+    'Е' => 'E',    'Ё' => 'E',    'Ж' => 'Zh',   'З' => 'Z',    'И' => 'I',
+    'Й' => 'Y',    'К' => 'K',    'Л' => 'L',    'М' => 'M',    'Н' => 'N',
+    'О' => 'O',    'П' => 'P',    'Р' => 'R',    'С' => 'S',    'Т' => 'T',
+    'У' => 'U',    'Ф' => 'F',    'Х' => 'H',    'Ц' => 'C',    'Ч' => 'Ch',
+    'Ш' => 'Sh',   'Щ' => 'Sch',  'Ь' => '',     'Ы' => 'Y',    'Ъ' => '',
+    'Э' => 'E',    'Ю' => 'Yu',   'Я' => 'Ya',
+  );
+
+  $value = strtr($value, $converter);
+  return $value;
+}
+
 //-----------------------------
 
 // Слова по горизонтали
@@ -220,28 +245,62 @@ function getDatabyClaim()
 
 
 //Скачиваю данные по конкретному набору букв; 
-$firstClaim = preg_split("//u", $claim[0], -1, PREG_SPLIT_NO_EMPTY);
-// foreach ($allLeters as $i => $letter) {
-$claimArr = [];
-foreach ($firstClaim as $i => $letter) {
-  // https://poncy.ru/crossword/crossword-solve.jsn?mask=%D0%90---------
-  $mask = "?mask=" . $letter . "---------";
-  $urlBase = "https://poncy.ru/crossword/crossword-solve.jsn";
-  $encryptedWordLength = "10";
-  $name = "newData" . $encryptedWordLength  . "." . $i + 1;
-  if (file_get_contents("./data/" . $name . ".json") !== false) {
-    echo ("Такой json уже есть, возьму его локально" . "<br>\n");
-  } else {
-    echo ("Загружаю json с сервера"  . "<br>\n");
-    // saveJSON($name, $urlBase . $mask, $mask); //Вот это обращение к внешнему серверу
-    $claimArr = array_merge($claimArr, getData($urlBase . $mask, $mask));
-  }
-  if (!$firstClaim[$i + 1]) {
-    file_put_contents("./data/" . $name . ".json", json_encode($claimArr));
+
+// Вариант 1
+
+function getAllClaimData($claim, $encryptedWordLength = "0")
+{
+  foreach ($claim as $i => $currentClaim) {
+    $currentClaim = preg_split("//u", $currentClaim, -1, PREG_SPLIT_NO_EMPTY);
+    foreach ($currentClaim as $j => $letter) {
+      // https://poncy.ru/crossword/crossword-solve.jsn?mask=%D0%90---------
+      $mask = "?mask=" . $letter . "---------";
+      $urlBase = "https://poncy.ru/crossword/crossword-solve.jsn";
+      $encryptedWordLength = "10";
+      $name = "newData" . $encryptedWordLength  . "." . $i + 1 . "." . $j + 1;
+      //Проверка на то, есть ли уже такой json
+      if (file_get_contents("./data/" . $name . ".json") !== false) {
+        echo ("Такой json уже есть, возьму его локально" . "<br>\n");
+      } else {
+        echo ("Загружаю json " . $name . " с сервера"  . "<br>\n");
+        // cacheJSON($name, $urlBase . $mask, $mask); //Вот это обращение к внешнему серверу
+      }
+    }
   }
 }
 
+getAllClaimData($claim, "10");
 
+
+
+
+//Вариант 2; Здесь я хотел по одному Набору букв делать один Массив слов; Т.е. 1 массив включает в себя слова на 3 буквы;
+// $firstClaim = preg_split("//u", $claim[0], -1, PREG_SPLIT_NO_EMPTY);
+// // foreach ($allLeters as $i => $letter) {
+// $claimArr = [];
+// foreach ($firstClaim as $i => $letter) {
+//   // https://poncy.ru/crossword/crossword-solve.jsn?mask=%D0%90---------
+//   $mask = "?mask=" . $letter . "---------";
+//   $urlBase = "https://poncy.ru/crossword/crossword-solve.jsn";
+//   $encryptedWordLength = "10";
+//   $name = "newData" . $encryptedWordLength  . "." . $i + 1;
+
+//   //Вариант 1; Проверка на то, есть ли уже такой json, чтобы не скачивать с сервера заново
+//   if (file_get_contents("./data/" . $name . ".json") !== false) {
+//     echo ("Такой json уже есть, возьму его локально" . "<br>\n");
+//   } else {
+//     echo ("Загружаю json с сервера"  . "<br>\n");
+//     // cacheJSON($name, $urlBase . $mask, $mask); //Вот это обращение к внешнему серверу
+//     // $claimArr = array_merge($claimArr, getData($urlBase . $mask, $mask)); //это я хотел собрать все данные по клейму в один массив;
+//   }
+//   // if (!$firstClaim[$i + 1]) {
+//   // file_put_contents("./data/" . $name . ".json", json_encode($claimArr));
+//   // }
+// }
+
+
+
+//
 
 
 
