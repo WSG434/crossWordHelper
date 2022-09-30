@@ -202,6 +202,14 @@ function echoResult($result, $encryptedWord, $n = 0)
   }
 }
 
+// function checkResult($result){
+//   if (count($result) === 1) {
+//     return true;
+//   } else {
+//     return false;
+//   }
+// }
+
 
 //Транслит русских букв
 function translit($value)
@@ -591,12 +599,57 @@ for ($i = 0; $i < count($resultArr); $i++) {
     // $words = getData($url . $mask, $mask); //отправка запроса на сервер
     $words = json_decode(file_get_contents("./data/maskedJSON.json"), true); //чтение локально
     $result = findMatch($words, $claim, $encryptedWord);
-    echoResult($result, $encryptedWord);
-  } else {
-    echo ("В слове нет известных букв: " . implode("", $encryptedWordCurrent) . "<br>\n");
+    echoResult($result, $encryptedWord); // отображаю результат
+
+    if (count($result) === 1) {
+      foreach ($result as $r => $letter) {
+        // $resultArr[$i][$r] = $letter;
+      }
+      echo ("ВОТ ДЛИННА ЗАПИСАННОГО СЛОВА: " . count($result) . "<br>\n");
+      echo ("ЗАПИСАЛ РЕЗУЛЬТИРУЮЩЕЕ СЛОВО В МАССИВ: " . implode("", $result) . "<br>\n");
+      // viewHorizontalResult($resultArr);
+    } else {
+      echo ("ВОТ ЧЕМУ РАВНА ДЛИННА МАССИВА RESULT: " . count($result) . "<br>\n");
+      echo ("ВОТ САМО СЛОВО: " . implode("", $result) . "<br>\n");
+      echo ("В слове нет известных букв: " . implode("", $encryptedWordCurrent) . "<br>\n");
+    }
   }
 }
+viewHorizontalResult($resultArr);
+viewVerticalResult($resultArr);
+echo "<br>\n";
 
+
+//Отобразить горизонтальные слова;
+function viewHorizontalResult($resultArr)
+{
+  echo ("<br>\n");
+  echo ("Слова по горизонтали: " . "<br>\n");
+  for ($i = 0; $i < count($resultArr); $i++) {
+    echo ("Слово №:" . $i + 1 . " ");
+    for ($j = 0; $j < count($resultArr[$i]); $j++) {
+      echo ($resultArr[$i][$j]);
+    }
+    echo ("<br>\n");
+  }
+  echo ("Горизонтальное отображение успешно завершено!" . "<br>\n");
+};
+
+//Отобразить вертикальные слова;
+function viewVerticalResult($resultArr)
+{
+  echo ("<br>\n");
+  echo ("Слова по горизонтали: " . "<br>\n");
+  $countWords = count($resultArr[0]);
+  for ($i = 0; $i < $countWords; $i++) {
+    echo ("Слово №:" . $i + 1 . " ");
+    for ($j = 0; $j < count($resultArr); $j++) {
+      echo ($resultArr[$j][$i]);
+    }
+    echo ("<br>\n");
+  }
+  echo ("Вертикальное отображение успешно завершено!" . "<br>\n");
+}
 
 //Проверка на наличие известных букв в слове
 function checkLetters($word)
