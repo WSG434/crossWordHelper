@@ -235,9 +235,9 @@ $claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
 function getEncryptedWords()
 {
 };
-function createMask()
-{
-};
+// function createMask()
+// {
+// };
 function getDatabyClaim()
 {
 };
@@ -488,23 +488,21 @@ echoResult($finalResult, $encryptedWordResult);
 // Позиции букв для Результирующего слова; Шифр Результирующего зашифрованного слова
 // }
 
+
+//шифрованные слова + массив результирующих данных данных
 $resultArr = [
-  [1, 1, 5, 3, 2, 4, 1, 5, 2, 6],
-  [1, 6, 5, 6, 3, 3, 5, 3, 6, 1],
-  [5, 4, 2, 4, 2, 5, 1, 3, 2, 2],
-  [3, 6, 5, 5, 5, 1, 6, 5, 6, 3],
-  [4, 2, 1, 3, 6, 3, 3, 4, 5, 6],
+  ["1", "1", "5", "3", "2", "4", "1", "5", "2", "6"],
+  ["1", "6", "5", "6", "3", "3", "5", "3", "6", "1"],
+  ["5", "4", "2", "4", "2", "5", "1", "3", "2", "2"],
+  ["3", "6", "5", "5", "5", "1", "6", "5", "6", "3"],
+  ["4", "2", "1", "3", "6", "3", "3", "4", "5", "6"],
 ];
 
+
+//Наборы букв
 $claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
 
 
-// $finalWord = [
-//   $resultArr[0][4], $resultArr[1][6], $resultArr[2][1],
-//   $resultArr[2][3], $resultArr[3][0], $resultArr[3][3],
-//   $resultArr[3][9], $resultArr[4][7], $resultArr[4][9]
-// ];
-// echo (implode("", $finalWord));
 
 
 $finalWordpart1 = [
@@ -548,4 +546,48 @@ function getFinalClaim($resultArr)
   $finalClaim = [implode("", $finalWordpart1), implode("", $finalWordpart2), implode("", $finalWordpart3)];
   // echo (implode("", $finalClaim));
   return $finalClaim;
+}
+
+
+
+echo ("Слова по горизонтали:" . "<br>\n");
+
+// // Вызов функции Как было
+// foreach ($encryptedWords as $e => $currentEncryptedWord) {
+//   $needClaim = findCurrentClaim($claim, $currentEncryptedWord);
+//   $result = checkClaimWords($claimMap[$needClaim], $currentEncryptedWord, $claim);
+//   echo ("Слово №: " . ($e + 1) . " ");
+//   // echo ("Результирующий массив: " . $result . "; " . "<br>\n");
+//   echoResult($result, $currentEncryptedWord);
+// }
+
+
+//Переделанный вызов
+for ($i = 0; $i < count($resultArr); $i++) {
+  $encryptedWord = $resultArr[$i];
+  if (checkLetters(implode("", $encryptedWord))) {
+    echo ("Найден шифр с открытыми буквами: " . implode("", $encryptedWord) . "<br>\n");
+    $mask = createMask($encryptedWord);
+    echo ("Сгенерирована маска: " . implode("", $mask) . "<br>\n");
+  } else {
+    echo ("В слове нет известных букв: " . implode("", $encryptedWord) . "<br>\n");
+  }
+}
+
+
+//Проверка на наличие известных букв в слове
+function checkLetters($word)
+{
+  return preg_match('/[\p{L&}]/', $word) ? true : false;
+}
+
+//Генерация маски
+function createMask($word)
+{
+  foreach ($word as $w => $letter) {
+    if (checkLetters($letter) === false) {
+      $word[$w] = "-";
+    }
+  }
+  return $word;
 }
