@@ -35,14 +35,14 @@ function getData($url = "", $mask = "", $count = 0, $i = 0)
 
   if ($count - 500 > 0) {
     $i++;
-    if ($i > 4) {
-      echo ("Запросов больше чем 3");
+    if ($i > 5) {
+      echo ("Запросов больше чем 5");
       return;
     }
     $count -= 500;
     var_dump("Текущая запрос: " . "https://poncy.ru/crossword/crossword-solve.jsn?mask=" . $mask . "&desc=&page=" . $i . "<br>\n");
-    sleep(5);
-    $array_from_recursion = getData("https://poncy.ru/crossword/crossword-solve.jsn?mask=" . $mask . "&desc=&page=" . $i, $mask, $count, $i);
+    sleep(2);
+    $array_from_recursion = getData("https://poncy.ru/crossword/next-result-page.json?" . $mask . "&desc=&page=" . $i, $mask, $count, $i);
 
     echo ("Размер текущего words до слияния в этой иттерации: " . count($myJson["words"]) . "<br>\n");
     echo ("Размер массива array_from_recursion до слияния в этой иттерации: " . count($array_from_recursion) . "<br>\n");
@@ -510,9 +510,9 @@ echoResult($finalResult, $encryptedWordResult);
 $resultArr = [
   ["А", "1", "5", "О", "К", "4", "А", "5", "2", "6"],
   ["1", "6", "5", "6", "3", "3", "5", "3", "6", "1"],
-  ["5", "4", "2", "4", "2", "5", "1", "3", "2", "2"],
+  ["5", "4", "2", "П", "2", "5", "1", "Н", "2", "2"],
   ["3", "6", "5", "5", "5", "1", "6", "5", "6", "3"],
-  ["4", "2", "1", "3", "6", "3", "3", "4", "5", "6"],
+  ["Р", "2", "1", "3", "6", "3", "3", "4", "5", "6"],
 ];
 
 //Зашифрованные слова
@@ -575,7 +575,7 @@ function getFinalClaim($resultArr)
 }
 
 
-
+echo ("<br>\n");
 echo ("Слова по горизонтали:" . "<br>\n");
 
 // // Вызов функции Как было
@@ -589,35 +589,46 @@ echo ("Слова по горизонтали:" . "<br>\n");
 
 
 //Переделанный вызов
+
+
+
+
+//Слова по вертикали
 for ($i = 0; $i < count($resultArr); $i++) {
   $encryptedWordCurrent = $resultArr[$i];
   $encryptedWord = $encryptedWords[$i];
   if (checkLetters(implode("", $encryptedWordCurrent))) {
+    //Если буквы есть в текущей строке, то делаю маску 
     echo ("Найден шифр с открытыми буквами: " . implode("", $encryptedWordCurrent) . "<br>\n");
-    $mask = createMask($encryptedWordCurrent);
+    $mask = getMask($encryptedWordCurrent);
     echo ("Сгенерирована маска: " . $mask . "<br>\n");
-    // $words = getData($url . $mask, $mask); //отправка запроса на сервер
-    $words = json_decode(file_get_contents("./data/maskedJSON.json"), true); //чтение локально
+    $words = getData($url . $mask, $mask); //отправка запроса на сервер
+    // $words = json_decode(file_get_contents("./data/maskedJSON.json"), true); //чтение локально
     $result = findMatch($words, $claim, $encryptedWord);
-    echoResult($result, $encryptedWord); // отображаю результат
+  } else {
+    //Если букв нет, то делаю перебор
+    $needClaim = preg_split("//u", findCurrentClaim($claim, $encryptedWord), -1, PREG_SPLIT_NO_EMPTY);
+    foreach ($needClaim as $k => $currentLetter) {
+      $mask = createMask($currentLetter, count($encryptedWord));
+      echo ("Маска: " . $mask . "<br>\n");
+      $words = getData($url . $mask, $mask); //отправка запроса на сервер
+      $result = findMatch($words, $claim, $encryptedWord);
+    }
+  }
 
-    if (count($result) === 1) {
-      foreach ($result as $r => $letter) {
-        // $resultArr[$i][$r] = $letter;
-      }
-      echo ("ВОТ ДЛИННА ЗАПИСАННОГО СЛОВА: " . count($result) . "<br>\n");
-      echo ("ЗАПИСАЛ РЕЗУЛЬТИРУЮЩЕЕ СЛОВО В МАССИВ: " . implode("", $result) . "<br>\n");
-      // viewHorizontalResult($resultArr);
-    } else {
-      echo ("ВОТ ЧЕМУ РАВНА ДЛИННА МАССИВА RESULT: " . count($result) . "<br>\n");
-      echo ("ВОТ САМО СЛОВО: " . implode("", $result) . "<br>\n");
-      echo ("В слове нет известных букв: " . implode("", $encryptedWordCurrent) . "<br>\n");
+  // Отображаю результат
+  echoResult($result, $encryptedWord, $i);
+  //Если подошло только одно слово, то записываю его в результирующий массив
+  if (count($result) === 1) {
+    $result = preg_split("//u", $result[0], -1, PREG_SPLIT_NO_EMPTY);
+    foreach ($result as $r => $letter) {
+      $resultArr[$i][$r] = $letter;
     }
   }
 }
+
 viewHorizontalResult($resultArr);
 viewVerticalResult($resultArr);
-echo "<br>\n";
 
 
 //Отобразить горизонтальные слова;
@@ -658,7 +669,7 @@ function checkLetters($word)
 }
 
 //Генерация маски
-function createMask($word)
+function getMask($word)
 {
   foreach ($word as $w => $letter) {
     if (checkLetters($letter) === false) {
@@ -666,4 +677,13 @@ function createMask($word)
     }
   }
   return implode("", $word);
+}
+
+function createMask($letter, $count)
+{
+  $mask = "" . $letter;
+  for ($i = 1; $i < $count; $i++) {
+    $mask = $mask . "-";
+  }
+  return $mask;
 }
