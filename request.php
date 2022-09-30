@@ -15,7 +15,7 @@ function getData($url = "", $mask = "", $count = 0, $i = 0)
   );
   // echo file_get_contents("https://www.google.com/", false, $context);
 
-
+  // echo("ЗАПРОС ОТПРАВЛЕН");
   //Отправили запрос, получили ответ
   $response = file_get_contents($url, false, $context);
   $myJson = json_decode($response, true);
@@ -544,42 +544,36 @@ $url = "https://poncy.ru/crossword/crossword-solve.jsn?mask=";
 
 // Функции
 
-//Собирает Набор букв для Результирующего слова
-function getFinalClaim($resultArr)
+
+//Проверка на наличие известных букв в слове
+function checkLetters($word)
 {
-  $finalWordpart1 = [
-    $resultArr[0][4], $resultArr[1][6], $resultArr[2][1]
-  ];
-
-  $finalWordpart2 = [
-    $resultArr[2][3], $resultArr[3][0], $resultArr[3][3]
-  ];
-
-  $finalWordpart3 = [
-    $resultArr[3][9], $resultArr[4][7], $resultArr[4][9]
-  ];
-
-  $finalClaim = [implode("", $finalWordpart1), implode("", $finalWordpart2), implode("", $finalWordpart3)];
-  // echo (implode("", $finalClaim));
-  return $finalClaim;
+  return preg_match('/[\p{L&}]/', $word) ? true : false;
 }
 
+//Генерация маски исходя из текущего состояния массива
+function getMask($word)
+{
+  foreach ($word as $w => $letter) {
+    if (checkLetters($letter) === false) {
+      $word[$w] = "-";
+    }
+  }
+  return implode("", $word);
+}
 
-echo ("<br>\n");
-echo ("Слова по горизонтали:" . "<br>\n");
+//Создание маски для перебора
+function createMask($letter, $count)
+{
+  $mask = "" . $letter;
+  for ($i = 1; $i < $count; $i++) {
+    $mask = $mask . "-";
+  }
+  return $mask;
+}
 
-// // Вызов функции Как было
-// foreach ($encryptedWords as $e => $currentEncryptedWord) {
-//   $needClaim = findCurrentClaim($claim, $currentEncryptedWord);
-//   $result = checkClaimWords($claimMap[$needClaim], $currentEncryptedWord, $claim);
-//   echo ("Слово №: " . ($e + 1) . " ");
-//   // echo ("Результирующий массив: " . $result . "; " . "<br>\n");
-//   echoResult($result, $currentEncryptedWord);
-// }
-
-
-//Переделанный вызов
-
+//Находит разагдки для кроссворда; 
+//Принимает Результирующий массив, Массив шифров, Набор букв, текущая иттерацию цикла, url адрес сайта с api
 function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url)
 {
   $encryptedWordCurrent = $resultArr[$i];
@@ -616,16 +610,7 @@ function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url)
   return $resultArr;
 }
 
-// Слова по горизонтали
-for ($i = 0; $i < count($resultArr); $i++) {
-  solveCrossword($resultArr, $encryptedWords, $claim, $i, $url);
-}
-
-
-
-//Вертикальные
-
-//Получает конкретное слово по вертикали из колонки $numberOfWord массива $arr
+//Возращает конкретное слово по вертикали из колонки $numberOfWord массива $arr
 function getVerticalWord($numberOfWord, $arr)
 {
   $result = [];
@@ -635,7 +620,7 @@ function getVerticalWord($numberOfWord, $arr)
   return $result;
 }
 
-
+//Создает массивы Шифров и Вертикальных слов
 function createVerticalArr($resultArr, $encryptedWords)
 {
   $verticalEncryptedWords = [];
@@ -650,57 +635,6 @@ function createVerticalArr($resultArr, $encryptedWords)
   }
   return ([$verticalWords, $verticalEncryptedWords]);
 }
-
-
-// echo ("ВОООООООООООООООООТ ЗДЕСЬ");
-// echo ("<br>\n");
-
-// for ($i = 0; $i < $countWords; $i++) {
-//   echo ("Шифр: " . implode("", $verticalWords[$i]));
-//   echo ("; Значение из массива: " . implode("", $verticalEncryptedWords[$i]));
-//   echo ("<br>\n");
-// }
-
-
-
-
-//Вот вызов
-
-//Слова по вертикали
-
-$verticalArr = createVerticalArr($resultArr, $encryptedWords);
-
-
-for ($i = 0; $i < $countWords; $i++) {
-  solveCrossword($veritcalArr[0], $verticalArr[1], $claim, $i, $url);
-}
-
-
-
-
-
-
-
-
-viewHorizontalResult($resultArr);
-viewVerticalResult($resultArr);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //Отобразить горизонтальные слова;
 function viewHorizontalResult($resultArr)
@@ -733,29 +667,47 @@ function viewVerticalResult($resultArr)
   echo ("Вертикальное отображение успешно завершено!" . "<br>\n");
 }
 
-//Проверка на наличие известных букв в слове
-function checkLetters($word)
+//Собирает Набор букв для Результирующего слова
+function getFinalClaim($resultArr)
 {
-  return preg_match('/[\p{L&}]/', $word) ? true : false;
+  $finalWordpart1 = [
+    $resultArr[0][4], $resultArr[1][6], $resultArr[2][1]
+  ];
+
+  $finalWordpart2 = [
+    $resultArr[2][3], $resultArr[3][0], $resultArr[3][3]
+  ];
+
+  $finalWordpart3 = [
+    $resultArr[3][9], $resultArr[4][7], $resultArr[4][9]
+  ];
+
+  $finalClaim = [implode("", $finalWordpart1), implode("", $finalWordpart2), implode("", $finalWordpart3)];
+  // echo (implode("", $finalClaim));
+  return $finalClaim;
 }
 
-//Генерация маски исходя из текущего состояния массива
-function getMask($word)
-{
-  foreach ($word as $w => $letter) {
-    if (checkLetters($letter) === false) {
-      $word[$w] = "-";
-    }
-  }
-  return implode("", $word);
+//-----------------------------------------------------------------
+
+//Вызов
+
+echo ("<br>\n");
+echo ("Слова по горизонтали:" . "<br>\n");
+
+
+// Слова по горизонтали
+for ($i = 0; $i < count($resultArr); $i++) {
+  $resultArr = solveCrossword($resultArr, $encryptedWords, $claim, $i, $url);
 }
 
-//Создание маски для перебора
-function createMask($letter, $count)
-{
-  $mask = "" . $letter;
-  for ($i = 1; $i < $count; $i++) {
-    $mask = $mask . "-";
-  }
-  return $mask;
+//Слова по вертикали
+$verticalArr = createVerticalArr($resultArr, $encryptedWords);
+
+for ($i = 0; $i < $countWords; $i++) {
+  $resultArr = solveCrossword($veritcalArr[0], $verticalArr[1], $claim, $i, $url);
 }
+
+
+//Отображение результата на экране
+viewHorizontalResult($resultArr);
+viewVerticalResult($resultArr);
