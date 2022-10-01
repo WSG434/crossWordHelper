@@ -109,7 +109,6 @@ function echoResult($result, $encryptedWord, $n = 0)
 {
   $encryptedWordImploded = implode("", $encryptedWord);
   if (count($result) > 1) {
-    echo ("Размер массива result: " . count($result) . "<br>\n");
     echo ("Слово №:" . ($n + 1) . " ");
     echo ("Возможные варианты: " . implode(", ", $result) . " Шифр: " . $encryptedWordImploded . "<br>\n");
     return true;
@@ -119,7 +118,7 @@ function echoResult($result, $encryptedWord, $n = 0)
       echo ("Результат: " . implode("", $result) . " Шифр: " . $encryptedWordImploded . "<br>\n");
       return true;
     } else {
-      echo ("К сожалению, слово "  . " Шифр: " . $encryptedWordImploded .  " не найдено;" . "<br>\n");
+      echo ("К сожалению, слово не найдено;" . " Шифр: " . $encryptedWordImploded . "<br>\n");
       return false;
     }
   }
@@ -219,9 +218,7 @@ function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url = "https:/
 
 
   // Отображаю результат
-  // echoResult($result, $encryptedWord, $i);
   echoResult($answersArr, $encryptedWord, $i);
-  //Если подошло только одно слово, то записываю его в результирующий массив
   $resultArr = addResult($answersArr, $resultArr, $i);
 
   return $resultArr;
@@ -298,8 +295,18 @@ function mergeVerticalHorizontal($verticalArr, $horizontalArr)
 }
 
 //Собирает Набор букв для Результирующего слова
-function getFinalClaim($resultArr)
+//Возвращает массив из 3 элементов;
+function getFinalClaim($resultArr, $claim = [])
 {
+  $converter = [
+    "1" => $claim[0],
+    "2" => $claim[1],
+    "3" => $claim[2],
+    "4" => $claim[3],
+    "5" => $claim[4],
+    "6" => $claim[5]
+  ];
+
   $finalWordpart1 = [
     $resultArr[0][4], $resultArr[3][3], $resultArr[4][7]
   ];
@@ -313,7 +320,11 @@ function getFinalClaim($resultArr)
     $resultArr[1][6], $resultArr[2][1], $resultArr[3][0]
   ];
 
-  $finalClaim = [implode("", $finalWordpart1), implode("", $finalWordpart2), implode("", $finalWordpart3)];
+
+
+
+
+  $finalClaim = [strtr(implode("", $finalWordpart1), $converter), strtr(implode("", $finalWordpart2), $converter), strtr(implode("", $finalWordpart3), $converter)];
   return $finalClaim;
 }
 
@@ -354,7 +365,7 @@ $resultArr = [
   ["1", "1", "5", "3", "2", "4", "1", "5", "2", "6"],
   ["1", "6", "5", "6", "3", "3", "5", "3", "6", "1"],
   ["5", "4", "2", "4", "2", "5", "1", "3", "2", "2"],
-  ["3", "6", "5", "У", "5", "1", "6", "5", "6", "3"],
+  ["3", "6", "5", "5", "5", "1", "6", "5", "6", "3"],
   ["4", "2", "1", "3", "6", "3", "3", "4", "5", "6"],
 ];
 
@@ -428,11 +439,13 @@ viewVerticalResult($resultArr);
 
 //Результирующее слово
 
-
-$finalClaim = getFinalClaim($resultArr);
+//Входные данные для поиска
+$finalClaim = getFinalClaim($resultArr, $claim);
 $finalEncryptedWord = ["1", "1", "1", "2", "2", "2", "3", "3", "3"];
 
+var_dump($finalClaim);
 
+//Поиск и вывод на экран
 echo ("<br>\n");
 echo ("Финальное слово: " . "<br>\n");
 getFinalWord($finalClaim, $finalEncryptedWord);
