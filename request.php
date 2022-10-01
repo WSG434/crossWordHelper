@@ -36,7 +36,6 @@ function getData($url = "", $mask = "", $count = 0, $i = 0)
 };
 
 
-
 //Находит нужный массив с данными
 function findCurrentClaim($claim, $encryptedWord)
 {
@@ -238,7 +237,7 @@ function viewHorizontalResult($resultArr)
 function viewVerticalResult($resultArr)
 {
   echo ("<br>\n");
-  echo ("Слова по горизонтали: " . "<br>\n");
+  echo ("Слова по вертикали: " . "<br>\n");
   $countWords = count($resultArr[0]);
   for ($i = 0; $i < $countWords; $i++) {
     echo ("Слово №:" . $i + 1);
@@ -248,6 +247,22 @@ function viewVerticalResult($resultArr)
     echo ("<br>\n");
   }
   echo ("Вертикальное отображение успешно завершено!" . "<br>\n");
+}
+
+//Слияние вертикального и горизонтального массивов
+//Возвращает горизонтальный массив
+function mergeVerticalHorizontal($verticalArr, $horizontalArr)
+{
+  echo ("<br>\n");
+  $countWords = count($verticalArr[0]);
+  for ($i = 0; $i < $countWords; $i++) { //0 .. 5
+
+    for ($j = 0; $j < count($verticalArr); $j++) { // 0 .. 10
+      $horizontalArr[$i][$j] = $verticalArr[$j][$i];
+    }
+  }
+  echo ("Слияние вертикального и горизонтального массивов успешно завершено!" . "<br>\n");
+  return $horizontalArr;
 }
 
 //Собирает Набор букв для Результирующего слова
@@ -274,16 +289,20 @@ function getFinalClaim($resultArr)
 function getFinalWord($finalClaim, $finalEncryptedWord, $url)
 {
   $currentClaim = preg_split("//u", $finalClaim[0], -1, PREG_SPLIT_NO_EMPTY);
+  $resultArr = [];
+  $result = [];
   foreach ($currentClaim as $k => $currentLetter) {
     $mask = createMask($currentLetter, count($finalEncryptedWord));
     usleep(200000); //защита от бана; ждать 0.2 секунды
     // $words = getData($url . $mask, $mask); //отправка запроса на сервер
-    $words = json_decode(file_get_contents("./data/resultWord.json"), true); //чтение локально
-    $result = findMatch($words, $finalClaim, $finalEncryptedWord);
+    // $words = json_decode(file_get_contents("./data/resultWord.json"), true); //чтение локально
+    $words = json_decode(file_get_contents("./data/withMASK.json"), true); //чтение локально
+    $result = implode("", findMatch($words, $finalClaim, $finalEncryptedWord));
+    if ($result !== "") {
+      array_push($resultArr, $result);
+    }
   }
-  echo ("<br>\n");
-  echo ("Финальное слово: " . "<br>\n");
-  echoResult($result, $finalEncryptedWord);
+  echoResult($resultArr, $finalEncryptedWord);
 }
 
 //------------------------------------------------------------------------------------------------------------------- 
@@ -351,6 +370,8 @@ for ($i = 0; $i < $countWords; $i++) {
   $verticalResultArr = solveCrossword($verticalResultArr, $verticalEncryptedWords, $claim, $i, $url);
 }
 
+
+//эмуляция работы сервера
 $verticalResultArr = [
   ["А", "1", "5", "О", "Р"],
   ["В", "6", "Р", "6", "2"],
@@ -367,12 +388,12 @@ $verticalResultArr = [
 //Отображение результата на экране
 
 //horizontal
-viewHorizontalResult($horizontalResultArr);
-viewVerticalResult($horizontalResultArr);
+// viewHorizontalResult($horizontalResultArr);
+// viewVerticalResult($horizontalResultArr);
 
 //vertical
-viewHorizontalResult($verticalResultArr);
-viewVerticalResult($verticalResultArr);
+// viewHorizontalResult($verticalResultArr);
+// viewVerticalResult($verticalResultArr);
 
 
 
@@ -382,38 +403,16 @@ $resultArr = mergeVerticalHorizontal($verticalResultArr, $horizontalResultArr);
 viewHorizontalResult($resultArr);
 viewVerticalResult($resultArr);
 
-function mergeVerticalHorizontal($verticalArr, $horizontalArr)
-{
-  echo ("<br>\n");
-  echo ("Слияние вертикального и горизонтального массивов: " . "<br>\n");
-  $countWords = count($verticalArr[0]);
-  for ($i = 0; $i < $countWords; $i++) { //0 .. 5
-    echo ("Слово №:" . $i + 1 . " ");
-    echo ("<br>\n");
-    for ($j = 0; $j < count($verticalArr); $j++) { // 0 .. 10
-      // echo ("ДО" . $verticalArr[$j][$i] . " = " . $horizontalArr[$i][$j] . "<br\n");
-      // echo ($horizontalArr[$i][$j] . " <= Горизонтальный элемент" . "<br\n");
-      echo "TEST0 " . " <br>\n";
-      echo "TEST1 " . $verticalArr[$j][$i] . " <br>\n";
-      echo "TEST2 " . $horizontalArr[$i][$j] . " <br>\n";
-      $horizontalArr[$i][$j] = $verticalArr[$j][$i];
-      // echo ("ПОСЛЕ: " . $verticalArr[$j][$i] . " = " . $horizontalArr[$i][$j] .  "<br\n");
-      echo "TEST3 " . " <br>\n";
-      echo "TEST4 " . $verticalArr[$j][$i] . " <br>\n";
-      echo "TEST5 " . $horizontalArr[$i][$j] . " <br>\n";
-    }
-    echo ("<br>\n");
-  }
-  echo ("Слияние успешно завершено!" . "<br>\n");
-  return $horizontalArr;
-}
+
 
 
 //Результирующее слово
-echo ("<br>\n");
-echo ("Результирующее слово:" . "<br>\n");
+
 
 $finalClaim = getFinalClaim($resultArr);
 $finalEncryptedWord = ["1", "1", "1", "2", "2", "2", "3", "3", "3"];
 
+
+echo ("<br>\n");
+echo ("Финальное слово: " . "<br>\n");
 getFinalWord($finalClaim, $finalEncryptedWord, $url);
