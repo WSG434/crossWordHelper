@@ -142,6 +142,7 @@ function createMask($letter, $count)
 //Возвращает массив результатов
 function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url)
 {
+  $answersArr = [];
   $encryptedWordCurrent = $resultArr[$i];
   $encryptedWord = $encryptedWords[$i];
 
@@ -151,20 +152,19 @@ function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url)
     // sleep(1); //защита от бана
     // ждать 0.2 секунды
     usleep(200000);
-    // $words = getData($url . $mask, $mask); //отправка запроса на сервер
+    $words = getData($url . $mask, $mask); //отправка запроса на сервер
     // $words = json_decode(file_get_contents("./data/maskedJSON.json"), true); //чтение локально
     $words = json_decode(file_get_contents("./data/withMASK.json"), true); //чтение локально
 
-    // $name = $i;
-    // file_put_contents("./data/" . $name . ".json", json_encode($words));
+    $name = $i;
+    file_put_contents("./data/" . $name . ".json", json_encode($words));
     $result = findMatch($words, $claim, $encryptedWord);
-    // Отображаю результат
-    echoResult($result, $encryptedWord, $i);
-    //Если подошло только одно слово, то записываю его в результирующий массив
-    if (count($result) === 1) {
-      $result = preg_split("//u", $result[0], -1, PREG_SPLIT_NO_EMPTY);
-      foreach ($result as $r => $letter) {
-        $resultArr[$i][$r] = $letter;
+
+    if ($result !== "") {
+      // echo ("PLAN A result: " . count($result) . "<br>\n");
+      // echo ("PLAN A result: " . implode(", ", $result) . "<br>\n");
+      foreach ($result as $q => $answer) {
+        array_push($answersArr, $answer);
       }
     }
   } else {
@@ -175,23 +175,46 @@ function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url)
       sleep(1); //защита от бана
       // ждать 0.8 секунды
       // usleep(800000);
-      // $words = getData($url . $mask, $mask); //отправка запроса на сервер
-      $words = json_decode(file_get_contents("./data/withoutMASK.json"), true); //чтение локально
+      $words = getData($url . $mask, $mask); //отправка запроса на сервер
+      // $words = json_decode(file_get_contents("./data/withoutMASK.json"), true); //чтение локально
 
-      // $name = $i + 100;
-      // file_put_contents("./data/" . $name . ".json", json_encode($words));
+      $name = $i + 100;
+      file_put_contents("./data/" . $name . ".json", json_encode($words));
       $result = findMatch($words, $claim, $encryptedWord);
-      // Отображаю результат
-      echoResult($result, $encryptedWord, $i);
-      //Если подошло только одно слово, то записываю его в результирующий массив
-      if (count($result) === 1) {
-        $result = preg_split("//u", $result[0], -1, PREG_SPLIT_NO_EMPTY);
-        foreach ($result as $r => $letter) {
-          $resultArr[$i][$r] = $letter;
+      if ($result !== "") {
+        // echo ("PLAN B result: " . count($result) . "<br>\n");
+        // echo ("PLAN B result: " . implode(", ", $result) . "<br>\n");
+        foreach ($result as $q => $answer) {
+          array_push($answersArr, $answer);
         }
       }
     }
   }
+
+
+
+  echo ("ITOGO count answerArr: " . count($answersArr) . "<br>\n");
+  echo ("ITOGO implode answersArr: " . implode(", ", $answersArr) . "<br>\n");
+  //АВТОКРАТИЯ "\u0410\u041b\u042c\u041a\u0410\u041d\u0410\u0414\u0420\u0415"
+
+  foreach ($answersArr as $o => $answer) {
+    // echo ("ITOGO result: " . count($answer) . "<br>\n");
+    // echo ("ITOGO result: " . implode(", ", $answer) . "<br>\n");
+    echo ("ITOGO current №" . $o .  ": " . $answer . "<br>\n");
+  }
+
+
+  // Отображаю результат
+  // echoResult($result, $encryptedWord, $i);
+  //Если подошло только одно слово, то записываю его в результирующий массив
+  if (count($answersArr) === 1) {
+    echo ("Записываю результат:" . $answersArr[0] . "<br>\n");
+    $result = preg_split("//u", $answersArr[0], -1, PREG_SPLIT_NO_EMPTY);
+    foreach ($result as $r => $letter) {
+      $resultArr[$i][$r] = $letter;
+    }
+  }
+
   return $resultArr;
 }
 
@@ -294,7 +317,7 @@ function getFinalWord($finalClaim, $finalEncryptedWord, $url)
   foreach ($currentClaim as $k => $currentLetter) {
     $mask = createMask($currentLetter, count($finalEncryptedWord));
     usleep(200000); //защита от бана; ждать 0.2 секунды
-    // $words = getData($url . $mask, $mask); //отправка запроса на сервер
+    $words = getData($url . $mask, $mask); //отправка запроса на сервер
     // $words = json_decode(file_get_contents("./data/resultWord.json"), true); //чтение локально
     $words = json_decode(file_get_contents("./data/withMASK.json"), true); //чтение локально
     $result = implode("", findMatch($words, $finalClaim, $finalEncryptedWord));
@@ -388,7 +411,7 @@ $verticalResultArr = [
 //Отображение результата на экране
 
 //horizontal
-// viewHorizontalResult($horizontalResultArr);
+viewHorizontalResult($horizontalResultArr);
 // viewVerticalResult($horizontalResultArr);
 
 //vertical
