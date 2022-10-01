@@ -1,5 +1,7 @@
 <?php
 
+ini_set('max_execution_time', 600);
+
 //Функция получения данных;
 //Рекурсивная функция, которая собирает json в один массив слов;
 function getData($url = "", $mask = "", $count = 0, $i = 0)
@@ -23,7 +25,8 @@ function getData($url = "", $mask = "", $count = 0, $i = 0)
   if ($count - 500 > 0) {
     $i++;
     $count -= 500;
-    usleep(200000); // защита от бана; ждать 0.2 секунды
+    usleep(300000); // защита от бана; ждать 0.3 секунды
+    // usleep(1000000); // защита от бана; ждать 1 секунду
     $array_from_recursion = getData("https://poncy.ru/crossword/next-result-page.json?mask=" . $mask . "&desc=&page=" . $i, $mask, $count, $i);
     $words = array_merge($myJson["words"], $array_from_recursion); //Сливаю два массива
     return $words;
@@ -145,30 +148,58 @@ function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url)
 
   if (checkLetters(implode("", $encryptedWordCurrent))) {
     //Если буквы есть в текущей строке, то делаю маску 
+    // echo ("Найден шифр с открытыми буквами: " . implode("", $encryptedWordCurrent) . "<br>\n");
     $mask = getMask($encryptedWordCurrent);
-    usleep(200000); //защита от бана; ждать 0.2 секунды
+    // echo ("Сгенерирована маска: " . $mask . "<br>\n");
+    // sleep(1); //защита от бана
+    // ждать 0.2 секунды
+    usleep(200000);
     $words = getData($url . $mask, $mask); //отправка запроса на сервер
     // $words = json_decode(file_get_contents("./data/maskedJSON.json"), true); //чтение локально
+    // $words = json_decode(file_get_contents("./data/withMASK.json"), true); //чтение локально
+
+    // echo ("Поиск произвожу по заданному Набору букв : " . implode("", $claim) . "<br>\n");
+    // echo ("Поиск произвожу по заданному шифру : " . implode("", $encryptedWord) . "<br>\n");
+    // echo ("Вот этот массив слов я передаю в findMatch : " . implode(", ", $words) . "<br>\n");
+    // $name = $i;
+    // file_put_contents("./data/" . $name . ".json", json_encode($words));
     $result = findMatch($words, $claim, $encryptedWord);
+    // Отображаю результат
+    echoResult($result, $encryptedWord, $i);
+    //Если подошло только одно слово, то записываю его в результирующий массив
+    if (count($result) === 1) {
+      $result = preg_split("//u", $result[0], -1, PREG_SPLIT_NO_EMPTY);
+      foreach ($result as $r => $letter) {
+        $resultArr[$i][$r] = $letter;
+      }
+    }
   } else {
     //Если букв нет, то делаю перебор
     $needClaim = preg_split("//u", findCurrentClaim($claim, $encryptedWord), -1, PREG_SPLIT_NO_EMPTY);
     foreach ($needClaim as $k => $currentLetter) {
       $mask = createMask($currentLetter, count($encryptedWord));
-      usleep(200000); //защита от бана; ждать 0.2 секунды
+      // echo ("Маска: " . $mask . "<br>\n");
+      sleep(1); //защита от бана
+      // ждать 0.2 секунды
+      // ждать 0.8 секунды
+      // usleep(800000);
       $words = getData($url . $mask, $mask); //отправка запроса на сервер
-      // $words = json_decode(file_get_contents("./data/maskedJSON.json"), true); //чтение локально
+      // $words = json_decode(file_get_contents("./data/withoutMASK.json"), true); //чтение локально
+      // var_dump("Поиск произвожу по заданному Набору букв : " . implode("", $claim) . "<br>\n");
+      // var_dump("Поиск произвожу по заданному шифру : " . implode("", $encryptedWord) . "<br>\n");
+      // var_dump("Вот этот массив слов я передаю в findMatch : " . implode(", ", $words) . "<br>\n");
+      // $name = $i + 100;
+      // file_put_contents("./data/" . $name . ".json", json_encode($words));
       $result = findMatch($words, $claim, $encryptedWord);
-    }
-  }
-
-  // Отображаю результат
-  echoResult($result, $encryptedWord, $i);
-  //Записываю результат; Если подошло только одно слово, то записываю его в результирующий массив иначе просто вывожу на экран
-  if (count($result) === 1) {
-    $result = preg_split("//u", $result[0], -1, PREG_SPLIT_NO_EMPTY);
-    foreach ($result as $r => $letter) {
-      $resultArr[$i][$r] = $letter;
+      // Отображаю результат
+      echoResult($result, $encryptedWord, $i);
+      //Если подошло только одно слово, то записываю его в результирующий массив
+      if (count($result) === 1) {
+        $result = preg_split("//u", $result[0], -1, PREG_SPLIT_NO_EMPTY);
+        foreach ($result as $r => $letter) {
+          $resultArr[$i][$r] = $letter;
+        }
+      }
     }
   }
   return $resultArr;
@@ -258,6 +289,7 @@ function getFinalWord($finalClaim, $finalEncryptedWord, $url)
     $words = getData($url . $mask, $mask); //отправка запроса на сервер
     // $words = json_decode(file_get_contents("./data/resultWord.json"), true); //чтение локально
     $result = findMatch($words, $finalClaim, $finalEncryptedWord);
+    echoResult($result, $finalEncryptedWord);
   }
   echo ("<br>\n");
   echo ("Финальное слово: " . "<br>\n");
