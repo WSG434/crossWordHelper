@@ -152,6 +152,30 @@ function createMask($letter, $count)
   return $mask;
 }
 
+//Добавить слово в массив возможных вариантов ответов
+function addVariant($result, $answersArr)
+{
+  if ($result !== "") {
+    foreach ($result as $q => $answer) {
+      array_push($answersArr, $answer);
+    }
+  }
+  return $answersArr;
+}
+
+//Записать ответ в результирующий массив
+function addResult($answersArr, $resultArr, $i)
+{
+  if (count($answersArr) === 1) {
+    // echo ("Записываю результат:" . $answersArr[0] . "<br>\n");
+    $result = preg_split("//u", $answersArr[0], -1, PREG_SPLIT_NO_EMPTY);
+    foreach ($result as $r => $letter) {
+      $resultArr[$i][$r] = $letter;
+    }
+  }
+  return $resultArr;
+}
+
 //Находит разагдки для кроссворда; 
 //Принимает Результирующий массив, Массив шифров, Набор букв, текущая иттерацию цикла, url адрес сайта с api
 //Возвращает массив результатов
@@ -166,66 +190,39 @@ function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url = "https:/
     $mask = getMask($encryptedWordCurrent);
     $name = count($encryptedWordCurrent) . $mask . ".json";
 
-    //Получаю данные локально или скачиваю
     $words = checkCache($name, $mask);
-
     $result = findMatch($words, $claim, $encryptedWord);
-
-    if ($result !== "") {
-      // echo ("PLAN A result: " . count($result) . "<br>\n");
-      // echo ("PLAN A result: " . implode(", ", $result) . "<br>\n");
-      foreach ($result as $q => $answer) {
-        array_push($answersArr, $answer);
-      }
-    }
+    $answersArr = addVariant($result, $answersArr);
   } else {
     //Если букв нет, то делаю перебор
     $needClaim = preg_split("//u", findCurrentClaim($claim, $encryptedWord), -1, PREG_SPLIT_NO_EMPTY);
     foreach ($needClaim as $k => $currentLetter) {
-
-
       $mask = createMask($currentLetter, count($encryptedWord));
       $name = count($encryptedWordCurrent) . $mask . ".json";
 
-      //Получаю данные локально или скачиваю
       $words = checkCache($name, $mask, $url, 800000);
-
       $result = findMatch($words, $claim, $encryptedWord);
-
-
-      if ($result !== "") {
-        // echo ("PLAN B result: " . count($result) . "<br>\n");
-        // echo ("PLAN B result: " . implode(", ", $result) . "<br>\n");
-        foreach ($result as $q => $answer) {
-          array_push($answersArr, $answer);
-        }
-      }
+      $answersArr = addVariant($result, $answersArr);
     }
   }
 
 
+  // echo ("ITOGO count answerArr: " . count($answersArr) . "<br>\n");
+  // echo ("ITOGO implode answersArr: " . implode(", ", $answersArr) . "<br>\n");
+  // //АВТОКРАТИЯ "\u0410\u041b\u042c\u041a\u0410\u041d\u0410\u0414\u0420\u0415"
 
-  echo ("ITOGO count answerArr: " . count($answersArr) . "<br>\n");
-  echo ("ITOGO implode answersArr: " . implode(", ", $answersArr) . "<br>\n");
-  //АВТОКРАТИЯ "\u0410\u041b\u042c\u041a\u0410\u041d\u0410\u0414\u0420\u0415"
-
-  foreach ($answersArr as $o => $answer) {
-    // echo ("ITOGO result: " . count($answer) . "<br>\n");
-    // echo ("ITOGO result: " . implode(", ", $answer) . "<br>\n");
-    echo ("ITOGO current №" . $o .  ": " . $answer . "<br>\n");
-  }
+  // foreach ($answersArr as $o => $answer) {
+  //   // echo ("ITOGO result: " . count($answer) . "<br>\n");
+  //   // echo ("ITOGO result: " . implode(", ", $answer) . "<br>\n");
+  //   echo ("ITOGO current №" . $o .  ": " . $answer . "<br>\n");
+  // }
 
 
   // Отображаю результат
   // echoResult($result, $encryptedWord, $i);
+  echoResult($answersArr, $encryptedWord, $i);
   //Если подошло только одно слово, то записываю его в результирующий массив
-  if (count($answersArr) === 1) {
-    echo ("Записываю результат:" . $answersArr[0] . "<br>\n");
-    $result = preg_split("//u", $answersArr[0], -1, PREG_SPLIT_NO_EMPTY);
-    foreach ($result as $r => $letter) {
-      $resultArr[$i][$r] = $letter;
-    }
-  }
+  $resultArr = addResult($answersArr, $resultArr, $i);
 
   return $resultArr;
 }
