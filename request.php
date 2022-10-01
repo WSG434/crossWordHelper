@@ -25,7 +25,7 @@ function getData($url = "", $mask = "", $count = 0, $i = 0)
   if ($count - 500 > 0) {
     $i++;
     $count -= 500;
-    usleep(300000); // защита от бана; ждать 0.3 секунды
+    usleep(500000); // защита от бана; ждать 0.3 секунды
     // usleep(1000000); // защита от бана; ждать 1 секунду
     $array_from_recursion = getData("https://poncy.ru/crossword/next-result-page.json?mask=" . $mask . "&desc=&page=" . $i, $mask, $count, $i);
     $words = array_merge($myJson["words"], $array_from_recursion); //Сливаю два массива
@@ -153,8 +153,8 @@ function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url)
     // ждать 0.2 секунды
     usleep(200000);
     // $words = getData($url . $mask, $mask); //отправка запроса на сервер
-    $words = json_decode(file_get_contents("./data/maskedJSON.json"), true); //чтение локально
-    // $words = json_decode(file_get_contents("./data/withMASK.json"), true); //чтение локально
+    // $words = json_decode(file_get_contents("./data/maskedJSON.json"), true); //чтение локально
+    $words = json_decode(file_get_contents("./data/withMASK.json"), true); //чтение локально
 
     // $name = $i;
     // file_put_contents("./data/" . $name . ".json", json_encode($words));
@@ -241,7 +241,7 @@ function viewVerticalResult($resultArr)
   echo ("Слова по горизонтали: " . "<br>\n");
   $countWords = count($resultArr[0]);
   for ($i = 0; $i < $countWords; $i++) {
-    echo ("Слово №:" . $i + 1 . " ");
+    echo ("Слово №:" . $i + 1);
     for ($j = 0; $j < count($resultArr); $j++) {
       echo ($resultArr[$j][$i]);
     }
@@ -280,7 +280,6 @@ function getFinalWord($finalClaim, $finalEncryptedWord, $url)
     // $words = getData($url . $mask, $mask); //отправка запроса на сервер
     $words = json_decode(file_get_contents("./data/resultWord.json"), true); //чтение локально
     $result = findMatch($words, $finalClaim, $finalEncryptedWord);
-    echoResult($result, $finalEncryptedWord);
   }
   echo ("<br>\n");
   echo ("Финальное слово: " . "<br>\n");
@@ -307,13 +306,6 @@ $resultArr = [
   ["4", "2", "1", "3", "6", "3", "3", "4", "5", "6"],
 ];
 
-// $resultArr = [
-//   ["А", "1", "5", "О", "К", "4", "А", "5", "2", "6"],
-//   ["1", "6", "5", "6", "3", "3", "Т", "3", "6", "1"],
-//   ["5", "Р", "2", "П", "2", "5", "1", "Н", "2", "2"],
-//   ["О", "6", "5", "У", "5", "1", "6", "5", "6", "Л"],
-//   ["Р", "2", "1", "3", "6", "3", "3", "С", "5", "Ь"],
-// ];
 
 //Зашифрованные слова
 $encryptedWords = [
@@ -359,6 +351,18 @@ for ($i = 0; $i < $countWords; $i++) {
   $verticalResultArr = solveCrossword($verticalResultArr, $verticalEncryptedWords, $claim, $i, $url);
 }
 
+$verticalResultArr = [
+  ["А", "1", "5", "О", "Р"],
+  ["В", "6", "Р", "6", "2"],
+  ["Т", "5", "2", "5", "1"],
+  ["О", "6", "П", "У", "3"],
+  ["К", "3", "2", "5", "6"],
+  ["Р", "3", "5", "1", "3"],
+  ["А", "Т", "1", "6", "3"],
+  ["Т", "3", "Н", "5", "С"],
+  ["И", "6", "2", "6", "5"],
+  ["Я", "1", "2", "Л", "Ь"]
+];
 
 //Отображение результата на экране
 
@@ -369,6 +373,7 @@ viewVerticalResult($horizontalResultArr);
 //vertical
 viewHorizontalResult($verticalResultArr);
 viewVerticalResult($verticalResultArr);
+
 
 
 //Слияние вертикального и горизонтального массивов
