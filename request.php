@@ -51,7 +51,8 @@ function checkCache($name, $mask, $url = "https://poncy.ru/crossword/crossword-s
   return $words;
 }
 
-//Находит нужный массив с данными
+//Находит нужный массив с данными по шифру
+//Возвращает Набор букв
 function findCurrentClaim($claim, $encryptedWord)
 {
   switch ($encryptedWord[0]) {
@@ -69,6 +70,39 @@ function findCurrentClaim($claim, $encryptedWord)
       return $claim[5];
   }
 }
+
+
+// Находит набор букв по букве
+// Возвращает набор букв
+function findClaimByLetter($claim, $letter)
+{
+  foreach ($claim as $i => $currentClaim) {
+    if (strpos($currentClaim, $letter) !== false) {
+      return $currentClaim;
+    }
+  }
+}
+
+//Найти шифр по известному набору букв
+//Вощвращает цифру шифра
+function findCurrentEncrypt($currentClaim, $claim)
+{
+  switch ($currentClaim) {
+    case $claim[0]:
+      return "1";
+    case $claim[1]:
+      return "2";
+    case $claim[2]:
+      return "3";
+    case $claim[3]:
+      return "4";
+    case  $claim[4]:
+      return "5";
+    case $claim[5]:
+      return "6";
+  }
+}
+
 
 //Ищет совпадения в конкретном массиве слов с конкретным шифром; 
 //Принимает конкретный массив слов на конкретную букву, Набор всех букв, Конкретный шифр слова
@@ -320,10 +354,6 @@ function getFinalClaim($resultArr, $claim = [])
     $resultArr[1][6], $resultArr[2][1], $resultArr[3][0]
   ];
 
-
-
-
-
   $finalClaim = [strtr(implode("", $finalWordpart1), $converter), strtr(implode("", $finalWordpart2), $converter), strtr(implode("", $finalWordpart3), $converter)];
   return $finalClaim;
 }
@@ -449,3 +479,194 @@ var_dump($finalClaim);
 echo ("<br>\n");
 echo ("Финальное слово: " . "<br>\n");
 getFinalWord($finalClaim, $finalEncryptedWord);
+
+
+
+
+//Проверяю черные поля
+echo ("<br>\n");
+echo ("Слова по горизонтали: " . "<br>\n");
+for ($i = 0; $i < count($resultArr); $i++) {
+  echo ("Слово №:" . $i + 1 . " ");
+  for ($j = 0; $j < count($resultArr[$i]); $j++) {
+    if ($resultArr[$i][$j] == "6") {
+      if (checkBlackCell($resultArr, $i, $j, count($resultArr), count($resultArr[$i]))) {
+        $resultArr[$i][$j] = ".";
+      }
+    }
+    echo ($resultArr[$i][$j]);
+  }
+  echo ("<br>\n");
+}
+echo ("Все черные блоки обнаружены!" . "<br>\n");
+
+
+//Проверяет можно ли ячейку сделать черной;
+function checkBlackCell($resultArr, $row, $column, $maxi, $maxj)
+{
+  $i = $row;
+  $j = $column;
+  $a = $resultArr;
+
+  if ($i + 1 < $maxi) {
+    if (checkLetters($a[$i + 1][$j]) === false) {
+      return false;
+    }
+  }
+
+  if ($i - 1 >= 0) {
+    if (checkLetters($a[$i - 1][$j]) === false) {
+      return false;
+    }
+  }
+
+  if ($j + 1 < $maxj) {
+    if (checkLetters($a[$i][$j + 1]) === false) {
+      return false;
+    }
+  }
+
+  if ($j - 1 >= 0) {
+    if (checkLetters($a[$i][$j - 1]) === false) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+echo ("<br>\n");
+echo ("Ищем ненайденные слова: " . "<br>\n");
+for ($i = 0; $i < count($resultArr); $i++) {
+  echo ("Слово №:" . $i + 1 . " ");
+  for ($j = 0; $j < count($resultArr[$i]); $j++) {
+    if (checkLetters($resultArr[$i][$j]) === false) { //нашли элемент который не равен букве
+    };
+  }
+  echo ("<br>\n");
+}
+echo ("Горизонтальное отображение успешно завершено!" . "<br>\n");
+
+function checkLine($resultArr, $row, $column)
+{
+  $i = $row;
+  $j = $column;
+  $horizontalArr = $resultArr;
+  $verticalArr = createVerticalArr($resultArr, [])[0];
+  $horizontalWord = "";
+}
+
+
+foreach ($resultArr as $h => $line) {
+  if (checkDigits(implode("", $line))) {
+    checkMap(createMap($line), $claim);
+  }
+}
+
+function writeWord($answersArr, $row, $column)
+{
+
+  if (count($answersArr) === 1) {
+    // echo ("Записываю результат:" . $answersArr[0] . "<br>\n");
+    $result = preg_split("//u", $answersArr[0], -1, PREG_SPLIT_NO_EMPTY);
+    foreach ($result as $r => $letter) {
+      $resultArr[$i][$r] = $letter;
+    }
+  }
+  return $resultArr;
+}
+
+function checkDigits($word)
+{
+  return preg_match('/[\d]/', $word) ? true : false;
+}
+
+//Формируем карту соответствий; Проходимся по строке и записываем возможные слова;
+//Номер символа в строке => Слово; Номер строки возьмем снаружи;
+//Возвращает массив; Номер элемента в строке => Слово
+function createMap($line)
+{
+  $findWords = [];
+  for ($i = 0; $i < count($line); $i++) {
+    $currentWord = "";
+    $flag = false;
+    while ($line[$i] !== "." && $i < count($line)) {
+      $currentWord = $currentWord . $line[$i];
+      if (checkLetters($line[$i]) === false) {
+        $flag = true;
+      }
+      if ($i + 1 <= count($line)) {
+        if ($line[$i + 1] === "." && ($flag === true) && (strlen($currentWord) > 1)) {
+          array_push($findWords, $currentWord);
+        }
+      } else {
+        if (($flag === true) && (strlen($currentWord) > 1)) {
+          array_push($findWords, $currentWord);
+        }
+      }
+      $i++;
+    }
+  }
+
+  echo ("Найденные возможные слова по горизонтали: " . implode(", ", $findWords) . "<br>\n");
+  $horizontalMap = [];
+
+  //Формируем карту соответствий; 
+  //Номер символа в строке => Слово; Номер строки возьмем снаружи;
+  //Возвращаем карту;
+  foreach ($findWords as $p => $word) {
+    echo (strpos(implode("", $line), $word));
+    echo ("<br>\n");
+    $horizontalMap[$word] =  strpos(implode("", $line), $word); //поменял тут местами с № => $word; на $word => №
+  }
+
+  foreach ($horizontalMap as $p => $elem) {
+    echo ($p . " => " . $elem . "<br>\n");
+  }
+
+  return $horizontalMap;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+//Проверяет слова найденные по маске
+//Возвращает массив возможных слов;
+function checkMap($map, $claim)
+{
+  $answersArr = [];
+  foreach ($map as $pos => $word) {
+    echo ("word: " . $word . "<br>\n");
+    $word = preg_split("//u", $word, -1, PREG_SPLIT_NO_EMPTY);
+    $mask = getMask($word);
+    $name = count($word) . $mask . ".json";
+    $words = checkCache($name, $mask, "https://poncy.ru/crossword/crossword-solve.json?mask=", 800000);
+    $encryptedWord = createEncrtyptedWord($word, $claim);
+    $result = findMatch($words, $claim, $encryptedWord);
+    $answersArr = addVariant($result, $answersArr);
+  }
+  echoResult($answersArr, $encryptedWord);
+  return $answersArr;
+}
+
+
+//Создает шифр по слову
+//Возвращает полный шифр на слово $word
+function createEncrtyptedWord($word, $claim)
+{
+  $encryptedWord = [];
+  foreach ($word as $i => $letter) {
+    $currentClaim = findClaimByLetter($claim, $letter);
+    array_push($encryptedWord, findCurrentEncrypt($currentClaim, $claim));
+  }
+  return $encryptedWord;
+}
