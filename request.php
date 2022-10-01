@@ -35,6 +35,21 @@ function getData($url = "", $mask = "", $count = 0, $i = 0)
   }
 };
 
+//Функция проверки на локальное хранение;
+//Возвращает массив данных по определенной маске
+function checkCache($name, $mask, $url = "https://poncy.ru/crossword/crossword-solve.json?mask=", $sleepTime = 200000)
+{
+  //Кэширование; Сделать функцию
+  if (file_exists("./data/" . $name)) {
+    $words = json_decode(file_get_contents("./data/" . $name), true); //чтение локально
+  } else {
+    // ждать 0.2 секунды, защита от бана сервера
+    usleep($sleepTime);
+    $words = getData($url . $mask, $mask); //отправка запроса на сервер
+    file_put_contents("./data/" . $name, json_encode($words));
+  }
+  return $words;
+}
 
 //Находит нужный массив с данными
 function findCurrentClaim($claim, $encryptedWord)
@@ -140,7 +155,7 @@ function createMask($letter, $count)
 //Находит разагдки для кроссворда; 
 //Принимает Результирующий массив, Массив шифров, Набор букв, текущая иттерацию цикла, url адрес сайта с api
 //Возвращает массив результатов
-function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url)
+function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url = "https://poncy.ru/crossword/crossword-solve.json?mask=")
 {
   $answersArr = [];
   $encryptedWordCurrent = $resultArr[$i];
@@ -149,15 +164,11 @@ function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url)
   if (checkLetters(implode("", $encryptedWordCurrent))) {
     //Если буквы есть в текущей строке, то делаю маску 
     $mask = getMask($encryptedWordCurrent);
-    // sleep(1); //защита от бана
-    // ждать 0.2 секунды
-    usleep(200000);
-    $words = getData($url . $mask, $mask); //отправка запроса на сервер
-    // $words = json_decode(file_get_contents("./data/maskedJSON.json"), true); //чтение локально
-    $words = json_decode(file_get_contents("./data/withMASK.json"), true); //чтение локально
+    $name = count($encryptedWordCurrent) . $mask . ".json";
 
-    $name = $i;
-    file_put_contents("./data/" . $name . ".json", json_encode($words));
+    //Получаю данные локально или скачиваю
+    $words = checkCache($name, $mask);
+
     $result = findMatch($words, $claim, $encryptedWord);
 
     if ($result !== "") {
@@ -171,16 +182,17 @@ function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url)
     //Если букв нет, то делаю перебор
     $needClaim = preg_split("//u", findCurrentClaim($claim, $encryptedWord), -1, PREG_SPLIT_NO_EMPTY);
     foreach ($needClaim as $k => $currentLetter) {
-      $mask = createMask($currentLetter, count($encryptedWord));
-      sleep(1); //защита от бана
-      // ждать 0.8 секунды
-      // usleep(800000);
-      $words = getData($url . $mask, $mask); //отправка запроса на сервер
-      // $words = json_decode(file_get_contents("./data/withoutMASK.json"), true); //чтение локально
 
-      $name = $i + 100;
-      file_put_contents("./data/" . $name . ".json", json_encode($words));
+
+      $mask = createMask($currentLetter, count($encryptedWord));
+      $name = count($encryptedWordCurrent) . $mask . ".json";
+
+      //Получаю данные локально или скачиваю
+      $words = checkCache($name, $mask, $url, 800000);
+
       $result = findMatch($words, $claim, $encryptedWord);
+
+
       if ($result !== "") {
         // echo ("PLAN B result: " . count($result) . "<br>\n");
         // echo ("PLAN B result: " . implode(", ", $result) . "<br>\n");
@@ -309,17 +321,18 @@ function getFinalClaim($resultArr)
 }
 
 //Разгадывает финальное слово
-function getFinalWord($finalClaim, $finalEncryptedWord, $url)
+function getFinalWord($finalClaim, $finalEncryptedWord, $url = "https://poncy.ru/crossword/crossword-solve.json?mask=")
 {
   $currentClaim = preg_split("//u", $finalClaim[0], -1, PREG_SPLIT_NO_EMPTY);
   $resultArr = [];
   $result = [];
   foreach ($currentClaim as $k => $currentLetter) {
     $mask = createMask($currentLetter, count($finalEncryptedWord));
-    usleep(200000); //защита от бана; ждать 0.2 секунды
-    $words = getData($url . $mask, $mask); //отправка запроса на сервер
-    // $words = json_decode(file_get_contents("./data/resultWord.json"), true); //чтение локально
-    $words = json_decode(file_get_contents("./data/withMASK.json"), true); //чтение локально
+    $name = count($finalEncryptedWord) . $mask . ".json";
+
+    //Получаю данные локально или скачиваю
+    $words = checkCache($name, $mask);
+
     $result = implode("", findMatch($words, $finalClaim, $finalEncryptedWord));
     if ($result !== "") {
       array_push($resultArr, $result);
@@ -344,7 +357,7 @@ $resultArr = [
   ["1", "1", "5", "3", "2", "4", "1", "5", "2", "6"],
   ["1", "6", "5", "6", "3", "3", "5", "3", "6", "1"],
   ["5", "4", "2", "4", "2", "5", "1", "3", "2", "2"],
-  ["3", "6", "5", "5", "5", "1", "6", "5", "6", "3"],
+  ["3", "6", "5", "У", "5", "1", "6", "5", "6", "3"],
   ["4", "2", "1", "3", "6", "3", "3", "4", "5", "6"],
 ];
 
@@ -394,24 +407,11 @@ for ($i = 0; $i < $countWords; $i++) {
 }
 
 
-//эмуляция работы сервера
-$verticalResultArr = [
-  ["А", "1", "5", "О", "Р"],
-  ["В", "6", "Р", "6", "2"],
-  ["Т", "5", "2", "5", "1"],
-  ["О", "6", "П", "У", "3"],
-  ["К", "3", "2", "5", "6"],
-  ["Р", "3", "5", "1", "3"],
-  ["А", "Т", "1", "6", "3"],
-  ["Т", "3", "Н", "5", "С"],
-  ["И", "6", "2", "6", "5"],
-  ["Я", "1", "2", "Л", "Ь"]
-];
 
 //Отображение результата на экране
 
 //horizontal
-viewHorizontalResult($horizontalResultArr);
+// viewHorizontalResult($horizontalResultArr);
 // viewVerticalResult($horizontalResultArr);
 
 //vertical
@@ -438,4 +438,4 @@ $finalEncryptedWord = ["1", "1", "1", "2", "2", "2", "3", "3", "3"];
 
 echo ("<br>\n");
 echo ("Финальное слово: " . "<br>\n");
-getFinalWord($finalClaim, $finalEncryptedWord, $url);
+getFinalWord($finalClaim, $finalEncryptedWord);
