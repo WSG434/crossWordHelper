@@ -120,7 +120,6 @@ function createEncrtyptedWord($word, $claim)
   return $encryptedWord;
 }
 
-
 //Ищет совпадения в конкретном массиве слов с конкретным шифром; 
 //Принимает конкретный массив слов на конкретную букву, Набор всех букв, Конкретный шифр слова
 //Возвращает массив подходящих по шифру слов с текущего массива слов
@@ -156,6 +155,7 @@ function findMatch($words, $claim, $encryptedWord)
 }
 
 //Вывод результата;
+//Вовзращает true/false; true - один или несколько результатов; false - нет результатов; + текстовый вывод
 function echoResult($result, $encryptedWord, $n = 0)
 {
   $encryptedWordImploded = implode("", $encryptedWord);
@@ -175,19 +175,22 @@ function echoResult($result, $encryptedWord, $n = 0)
   }
 }
 
-//Проверка на наличие известных букв в слове
+//Проверка на наличие букв в строке/символ
+//Возвращает true/false;
 function checkLetters($word)
 {
   return preg_match('/[\p{L&}]/', $word) ? true : false;
 }
 
-//Проверка на вхождение цифр в строку/букву
+//Проверка на наличие цифр в строке/символе
+//Возвращает true/false;
 function checkDigits($word)
 {
   return preg_match('/[\d]/', $word) ? true : false;
 }
 
 //Генерация маски исходя из текущего состояния массива
+//Возвращает строку с маской
 function getMask($word)
 {
   foreach ($word as $w => $letter) {
@@ -198,7 +201,8 @@ function getMask($word)
   return implode("", $word);
 }
 
-//Создание маски для перебора
+//Создание маски для начинающейся на $letter и состоящую из $count символов
+//Возвращает строку с маской
 function createMask($letter, $count)
 {
   $mask = "" . $letter;
@@ -208,7 +212,9 @@ function createMask($letter, $count)
   return $mask;
 }
 
-//Добавить слово в массив возможных вариантов ответов
+//Добавить слова/слово в массив возможных вариантов ответов
+//Принимает два массива: $result - слова которые нужно добавить, $answersArr - куда нужно добавить
+//Возващает массив $answersArr 
 function addVariant($result, $answersArr)
 {
   if ($result !== "") {
@@ -264,7 +270,7 @@ function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url = "https:/
 
 
     // Отображаю результат
-    echoResult($answersArr, $encryptedWord, $i);
+    // echoResult($answersArr, $encryptedWord, $i);
     $resultArr = addResult($answersArr, $resultArr, $i);
   }
   return $resultArr;
@@ -280,7 +286,8 @@ function getVerticalWord($numberOfWord, $arr)
   return $result;
 }
 
-//Создает массивы Шифров и Вертикальных слов
+//Создает массивы Шифров и Слов по вертикали
+//Возвращает массив, состоящий из двух массивов 1 - слова, 2 - шифры
 function createVerticalArr($resultArr, $encryptedWords)
 {
   $verticalEncryptedWords = [];
@@ -325,10 +332,9 @@ function viewVerticalResult($resultArr)
 }
 
 //Слияние вертикального и горизонтального массивов
-//Возвращает горизонтальный массив
+//Возвращает результат слияиня в виде горизонтального массива
 function mergeVerticalHorizontal($verticalArr, $horizontalArr)
 {
-  echo ("<br>\n");
   $countWords = count($verticalArr[0]);
   for ($i = 0; $i < $countWords; $i++) { //0 .. 5
 
@@ -336,12 +342,11 @@ function mergeVerticalHorizontal($verticalArr, $horizontalArr)
       $horizontalArr[$i][$j] = $verticalArr[$j][$i];
     }
   }
-  echo ("Слияние вертикального и горизонтального массивов успешно завершено!" . "<br>\n");
   return $horizontalArr;
 }
 
 //Выявляю черные поля
-//Возвращает результирующий массив
+//Возвращает новый результирующий массив
 function fillBlackFields($resultArr)
 {
   for ($i = 0; $i < count($resultArr); $i++) {
@@ -353,16 +358,12 @@ function fillBlackFields($resultArr)
       }
     }
   }
-  echo ("<br>\n");
-  echo ("Все черные блоки обнаружены!" . "<br>\n");
-  echo ("Изменения внесены в результирующий массив." . "<br>\n");
-  echo ("<br>\n");
 
   return $resultArr;
 }
 
 //Проверяет можно ли ячейку сделать черной;
-//Возвращает результирующий массив
+//Возвращает новый результирующий массив
 function checkBlackCell($resultArr, $row, $column, $maxi, $maxj)
 {
   $i = $row;
@@ -397,7 +398,7 @@ function checkBlackCell($resultArr, $row, $column, $maxi, $maxj)
 }
 
 //Находит оставшиеся неразгаданые пробелы и заполняет их
-//Возвращает результирующий массив
+//Возвращает новый результирующий массив
 function fillGaps($arr, $claim)
 {
   foreach ($arr as $h => $line) {
@@ -547,7 +548,6 @@ function getFinalWord($finalClaim, $finalEncryptedWord, $url = "https://poncy.ru
 
 //------------------------------------------------------------------------------------------------------------------- 
 
-
 // Исходные данные
 
 // $POST = {
@@ -586,13 +586,9 @@ $url = "https://poncy.ru/crossword/crossword-solve.json?mask=";
 //Вызов функций
 
 // Слова по горизонтали
-echo ("<br>\n");
-echo ("Слова по горизонтали:" . "<br>\n");
 $horizontalResultArr = solveCrossword($resultArr, $encryptedWords, $claim, $i, $url);
 
 //Слова по вертикали
-echo ("<br>\n");
-echo ("Слова по вертикали:" . "<br>\n");
 $verticalArr = createVerticalArr($horizontalResultArr, $encryptedWords);
 $verticalResultArr = solveCrossword($verticalArr[0], $verticalArr[1], $claim, $i, $url);
 
@@ -608,6 +604,7 @@ $verticalArr = createVerticalArr($resultArr, $encryptedWords);
 $verticalArr = $verticalArr[0];
 
 //Заполняем пробелы
+echo ("Возможные слова: " . "<br>\n");
 $horizontalArr = fillGaps($horizontalArr, $claim);
 $verticalArr = fillGaps($verticalArr, $claim);
 
@@ -615,12 +612,9 @@ $verticalArr = fillGaps($verticalArr, $claim);
 $resultArr = mergeVerticalHorizontal($verticalArr, $horizontalArr);
 
 //Выводим результат
-echo "<br>\n";
-echo "В итоге получилось: ";
-echo "<br>\n";
+
 viewHorizontalResult($resultArr);
 viewVerticalResult($resultArr);
-
 
 //Результирующее слово
 //Входные данные для поиска
