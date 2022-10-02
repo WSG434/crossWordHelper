@@ -27,7 +27,11 @@ function getData($url = "", $mask = "", $count = 0, $i = 0)
   if ($count - 500 > 0) {
     $i++;
     $count -= 500;
-    usleep(500000); // защита от бана; ждать 0.5 секунды
+    // usleep(1000000); // защита от бана; ждать 1 секунды; PASSED работает; Время загрузки: 1 ммин 24сек
+    usleep(700000); // защита от бана; ждать 0.7 секунды; PASSED работает; Время загрузки: 43 сек
+    // usleep(500000); // защита от бана; ждать 0.5 секунды; BANNED не работает, забанило; Время загрузки: ?
+    //Вопрос: от количества запросов за короткое время или из-за маленького значения usleep? 
+
     $array_from_recursion = getData("https://poncy.ru/crossword/next-result-page.json?mask=" . $mask . "&desc=&page=" . $i, $mask, $count, $i);
     $words = array_merge($myJson["words"], $array_from_recursion); //Сливаю два массива
     return $words;
@@ -240,7 +244,7 @@ function addResult($answersArr, $resultArr, $i)
 //Находит разагдки для кроссворда; 
 //Принимает Результирующий массив, Массив шифров, Набор букв, текущая иттерацию цикла, url адрес сайта с api
 //Возвращает массив результатов
-function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url = "https://poncy.ru/crossword/crossword-solve.json?mask=")
+function solveCrossword($resultArr, $encryptedWords, $claim, $url = "https://poncy.ru/crossword/crossword-solve.json?mask=")
 {
   for ($i = 0; $i < count($resultArr); $i++) {
     $answersArr = [];
@@ -536,7 +540,7 @@ function getFinalWord($finalClaim, $finalEncryptedWord, $url = "https://poncy.ru
     $name = count($finalEncryptedWord) . $mask . ".json";
 
     //Получаю данные локально или скачиваю
-    $words = checkCache($name, $mask);
+    $words = checkCache($name, $mask, $url, 800000);
 
     $result = implode("", findMatch($words, $finalClaim, $finalEncryptedWord));
     if ($result !== "") {
@@ -586,11 +590,11 @@ $url = "https://poncy.ru/crossword/crossword-solve.json?mask=";
 //Вызов функций
 
 // Слова по горизонтали
-$horizontalResultArr = solveCrossword($resultArr, $encryptedWords, $claim, $i, $url);
+$horizontalResultArr = solveCrossword($resultArr, $encryptedWords, $claim, $url);
 
 //Слова по вертикали
 $verticalArr = createVerticalArr($horizontalResultArr, $encryptedWords);
-$verticalResultArr = solveCrossword($verticalArr[0], $verticalArr[1], $claim, $i, $url);
+$verticalResultArr = solveCrossword($verticalArr[0], $verticalArr[1], $claim, $url);
 
 //Слияние вертикального и горизонтального массивов
 $resultArr = mergeVerticalHorizontal($verticalResultArr, $horizontalResultArr);
