@@ -355,6 +355,28 @@ function mergeVerticalHorizontal($verticalArr, $horizontalArr)
   return $horizontalArr;
 }
 
+//Выявляю черные поля
+//Возвращает результирующий массив
+function fillBlackFields($resultArr)
+{
+  echo ("<br>\n");
+  echo ("Слова по горизонтали: " . "<br>\n");
+  for ($i = 0; $i < count($resultArr); $i++) {
+    echo ("Слово №:" . $i + 1 . " ");
+    for ($j = 0; $j < count($resultArr[$i]); $j++) {
+      if ($resultArr[$i][$j] == "6") {
+        if (checkBlackCell($resultArr, $i, $j, count($resultArr), count($resultArr[$i]))) {
+          $resultArr[$i][$j] = ".";
+        }
+      }
+      echo ($resultArr[$i][$j]);
+    }
+    echo ("<br>\n");
+  }
+  echo ("Все черные блоки обнаружены!" . "<br>\n");
+  return $resultArr;
+}
+
 //Проверяет можно ли ячейку сделать черной;
 //Возвращает результирующий массив
 function checkBlackCell($resultArr, $row, $column, $maxi, $maxj)
@@ -656,10 +678,40 @@ for ($i = 0; $i < $countWords; $i++) {
 
 //Слияние вертикального и горизонтального массивов
 $resultArr = mergeVerticalHorizontal($verticalResultArr, $horizontalResultArr);
+
+
 //horizontal
 viewHorizontalResult($resultArr);
 viewVerticalResult($resultArr);
 
+
+//Отмечаю черные поля;
+$resultArr = fillBlackFields($resultArr);
+
+//Отображаю
+viewHorizontalResult($resultArr);
+viewVerticalResult($resultArr);
+
+
+//Создаем актуальные массивы
+$horizontalArr = $resultArr;
+$verticalArr = createVerticalArr($resultArr, $encryptedWords);
+$verticalArr = $verticalArr[0];
+
+//Заполняем пробелы
+$horizontalArr = fillGaps($horizontalArr, $claim);
+$verticalArr = fillGaps($verticalArr, $claim);
+
+//Делаем слияние
+$resultArr = mergeVerticalHorizontal($verticalArr, $horizontalArr);
+
+
+//Выводим результат
+echo "<br>\n";
+echo "В итоге получилось: ";
+echo "<br>\n";
+viewHorizontalResult($resultArr);
+viewVerticalResult($resultArr);
 
 
 
@@ -675,91 +727,3 @@ var_dump($finalClaim);
 echo ("<br>\n");
 echo ("Финальное слово: " . "<br>\n");
 getFinalWord($finalClaim, $finalEncryptedWord);
-
-
-
-//------------------------------------------------ Доработки
-
-//Проверяю черные поля
-echo ("<br>\n");
-echo ("Слова по горизонтали: " . "<br>\n");
-for ($i = 0; $i < count($resultArr); $i++) {
-  echo ("Слово №:" . $i + 1 . " ");
-  for ($j = 0; $j < count($resultArr[$i]); $j++) {
-    if ($resultArr[$i][$j] == "6") {
-      if (checkBlackCell($resultArr, $i, $j, count($resultArr), count($resultArr[$i]))) {
-        $resultArr[$i][$j] = ".";
-      }
-    }
-    echo ($resultArr[$i][$j]);
-  }
-  echo ("<br>\n");
-}
-echo ("Все черные блоки обнаружены!" . "<br>\n");
-
-
-
-
-
-// echo ("<br>\n");
-// echo ("Ищем ненайденные слова: " . "<br>\n");
-// for ($i = 0; $i < count($resultArr); $i++) {
-//   echo ("Слово №:" . $i + 1 . " ");
-//   for ($j = 0; $j < count($resultArr[$i]); $j++) {
-//     if (checkLetters($resultArr[$i][$j]) === false) { //нашли элемент который не равен букве
-//     };
-//   }
-//   echo ("<br>\n");
-// }
-// echo ("Горизонтальное отображение успешно завершено!" . "<br>\n");
-
-
-
-
-
-viewHorizontalResult($resultArr);
-viewVerticalResult($resultArr);
-
-
-
-
-
-
-
-
-
-$horizontalArr = $resultArr;
-$verticalArr = createVerticalArr($resultArr, $encryptedWords);
-$verticalArr = $verticalArr[0];
-
-// viewHorizontalResult($verticalArr);
-
-// function fillGaps($resultArr, $row, $column)
-// {
-
-// foreach ($resultArr as $h => $line) {
-//   if (checkDigits(implode("", $line))) {
-//     $myMap = createMap($line);
-//     $answersArr = checkMap($myMap, $claim);
-//     $resultArr = writeWord($resultArr, $answersArr, $h, $myMap,  count($line));
-//   }
-// }
-
-// }
-
-
-
-
-$horizontalArr = fillGaps($horizontalArr, $claim);
-$verticalArr = fillGaps($verticalArr, $claim);
-
-
-
-$resultArr = mergeVerticalHorizontal($verticalArr, $horizontalArr);
-
-echo "<br>\n";
-echo "В итоге получилось: ";
-echo "<br>\n";
-
-viewHorizontalResult($resultArr);
-viewVerticalResult($resultArr);
