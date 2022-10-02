@@ -103,6 +103,27 @@ function findCurrentEncrypt($currentClaim, $claim)
   }
 }
 
+//Создает шифр по слову
+//Возвращает полный шифр на слово $word
+function createEncrtyptedWord($word, $claim)
+{
+  $encryptedWord = [];
+  echo ("ПЕРЕДАННОЕ СЛОВО ДЛЯ СОЗДАНИИ МАСКИ: " . implode("", $word) . "<br>\n");
+
+  foreach ($word as $i => $letter) {
+    if (checkDigits($letter)) {
+      array_push($encryptedWord, $letter);
+      continue;
+    }
+    $currentClaim = findClaimByLetter($claim, $letter);
+    array_push($encryptedWord, findCurrentEncrypt($currentClaim, $claim));
+  }
+
+  echo ("ПОЛУЧЕННАЯ МАСКА: " . implode("", $encryptedWord) . "<br>\n");
+
+  return $encryptedWord;
+}
+
 
 //Ищет совпадения в конкретном массиве слов с конкретным шифром; 
 //Принимает конкретный массив слов на конкретную букву, Набор всех букв, Конкретный шифр слова
@@ -162,6 +183,12 @@ function echoResult($result, $encryptedWord, $n = 0)
 function checkLetters($word)
 {
   return preg_match('/[\p{L&}]/', $word) ? true : false;
+}
+
+//Проверка на вхождение цифр в строку/букву
+function checkDigits($word)
+{
+  return preg_match('/[\d]/', $word) ? true : false;
 }
 
 //Генерация маски исходя из текущего состояния массива
@@ -303,7 +330,7 @@ function viewVerticalResult($resultArr)
   echo ("Слова по вертикали: " . "<br>\n");
   $countWords = count($resultArr[0]);
   for ($i = 0; $i < $countWords; $i++) {
-    echo ("Слово №:" . $i + 1);
+    echo ("Слово №:" .  $i + 1 . " ");
     for ($j = 0; $j < count($resultArr); $j++) {
       echo ($resultArr[$j][$i]);
     }
@@ -327,6 +354,175 @@ function mergeVerticalHorizontal($verticalArr, $horizontalArr)
   echo ("Слияние вертикального и горизонтального массивов успешно завершено!" . "<br>\n");
   return $horizontalArr;
 }
+
+//Проверяет можно ли ячейку сделать черной;
+//Возвращает результирующий массив
+function checkBlackCell($resultArr, $row, $column, $maxi, $maxj)
+{
+  $i = $row;
+  $j = $column;
+  $a = $resultArr;
+
+  if ($i + 1 < $maxi) {
+    if (checkLetters($a[$i + 1][$j]) === false) {
+      return false;
+    }
+  }
+
+  if ($i - 1 >= 0) {
+    if (checkLetters($a[$i - 1][$j]) === false) {
+      return false;
+    }
+  }
+
+  if ($j + 1 < $maxj) {
+    if (checkLetters($a[$i][$j + 1]) === false) {
+      return false;
+    }
+  }
+
+  if ($j - 1 >= 0) {
+    if (checkLetters($a[$i][$j - 1]) === false) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+//Находит оставшиеся неразгаданые пробелы и заполняет их
+//Возвращает результирующий массив
+function fillGaps($arr, $claim)
+{
+  foreach ($arr as $h => $line) {
+    if (checkDigits(implode("", $line))) {
+      $myMap = createMap($line);
+      $answersArr = checkMap($myMap, $claim);
+      $arr = writeWord($arr, $answersArr, $h, $myMap,  count($line));
+    }
+  }
+  return $arr;
+}
+
+
+//Формируем карту соответствий; Проходимся по строке и записываем возможные слова;
+//Номер символа в строке => Слово; Номер строки возьмем снаружи;
+//Возвращает массив; Номер элемента в строке => Слово
+function createMap($line)
+{
+  $findWords = [];
+  $currentWord = "";
+  for ($i = 0; $i < count($line); $i++) {
+    // echo ("Это currentWord в createMap перед обнулением: " . $currentWord . "<br>\n");
+    $currentWord = "";
+    $flag = false;
+    while ($line[$i] !== "." && $i < count($line)) {
+      // echo ("Это символ line[i] : " . $line[$i] . "<br>\n");
+      $currentWord = $currentWord . $line[$i];
+      if (checkLetters($line[$i]) === false) {
+        $flag = true;
+      }
+      if ($i + 1 < count($line)) {
+        // echo ("Это currentWord на каждой иттерации: " . $currentWord . "<br>\n");
+        // echo ("Это условие flag: " . $flag . "<br>\n");
+        // echo ("Это условие strlen: " . strlen($currentWord) . "<br>\n");
+
+        if ($line[$i + 1] === "." && ($flag === true) && (strlen($currentWord) > 1)) {
+          array_push($findWords, $currentWord);
+        }
+      } else {
+        if (($flag === true) && (strlen($currentWord) > 1)) {
+          var_dump($currentWord);
+          echo ("<br>\n");
+          array_push($findWords, $currentWord);
+        }
+      }
+      $i++;
+    }
+  }
+
+  echo ("Найденные возможные слова по горизонтали: " . implode(", ", $findWords) . "<br>\n");
+  $horizontalMap = [];
+
+  //Формируем карту соответствий; 
+  //Номер символа в строке => Слово; Номер строки возьмем снаружи;
+  //Возвращаем карту;
+  foreach ($findWords as $p => $word) {
+    echo ("СТРОКА!!!!!!!!!!!!!!!!!!!!!!!!!!!" . implode("", $line) . "<br>\n");
+    echo ("СЛОВО!!!!!!!!!!!!!!!!!!!!!!!!!!!" .  $word . "<br>\n");
+
+    echo ("НАЙДЕННАЯ ПОЗИЦИЯ!!!!!!!!!!!!!!!!!!!!!!!!!!!" . strpos(implode("", $line), $word));
+    echo ("<br>\n");
+    $horizontalMap[$word] =  strpos(implode("", $line), $word); //поменял тут местами с № => $word; на $word => №
+  }
+
+  foreach ($horizontalMap as $p => $elem) {
+    echo ($p . " => " . $elem . "<br>\n");
+  }
+
+  return $horizontalMap;
+}
+
+//Проверяет слова найденные по маске
+//Возвращает массив возможных слов;
+function checkMap($map, $claim)
+{
+  $answersArr = [];
+  foreach ($map as $word => $pos) {
+    echo ("word: " . $word . "<br>\n");
+    $word = preg_split("//u", $word, -1, PREG_SPLIT_NO_EMPTY);
+    $mask = getMask($word);
+    echo ("МАСКА: " . $mask . "<br>\n");
+    $name = count($word) . $mask . ".json";
+    echo ("ИМЯ JSON: " . $name . "<br>\n");
+    $words = checkCache($name, $mask, "https://poncy.ru/crossword/crossword-solve.json?mask=", 800000);
+    $encryptedWord = createEncrtyptedWord($word, $claim);
+    echo ("ШИФР: " . implode("", $encryptedWord) . "<br>\n");
+    $result = findMatch($words, $claim, $encryptedWord);
+    echo ("Количество элементов в МАССИВЕ: " . count($result) . "<br>\n");
+    $answersArr = addVariant($result, $answersArr);
+  }
+  echoResult($answersArr, array($encryptedWord));
+  return $answersArr;
+}
+
+//Записать найденное неразгаданное слово в строку
+//Возвращает результирующий массив
+function writeWord($resultArr, $answersArr, $row = 0, $map, $columnMax = 0)
+{
+
+  var_dump($map);
+  echo ("ЭТО КОЛ-ВО ЭЛЕМЕНТОВ В КАРТЕ: " . count($map) . "<br>\n");
+  echo ("ЭТО answerARR : " . $answersArr[0] . "<br>\n");
+  echo ("ЭТО map[answersArr[0]] : " . $map[$answersArr[0]] . "<br>\n");
+
+  $i = $row;
+
+  foreach ($map as $word => $pos) {
+    if ($pos - 1 >= 0) {
+      $column = $pos - 1;
+    } else {
+      $column = $pos;
+    }
+  }
+  // $column = (int)$map[$answersArr[0]];
+  echo ("ЭТО СТОЛБЕЦ: " . $column . "<br>\n");
+
+  echo ("ЭТО СТРОКА В КОТОРОЙ Я БУДУ СЛИВАТЬ: " . implode("", $resultArr[$i]) . "<br>\n");
+
+
+  if (count($answersArr) === 1) {
+    // echo ("Записываю результат:" . $answersArr[0] . "<br>\n");
+    $result = preg_split("//u", $answersArr[0], -1, PREG_SPLIT_NO_EMPTY);
+    $resultCount = 0;
+    for ($j = $column; $j < $columnMax; $j++) {
+      $resultArr[$i][$j] = $result[$resultCount];
+      $resultCount++;
+    }
+  }
+  return $resultArr;
+}
+
 
 //Собирает Набор букв для Результирующего слова
 //Возвращает массив из 3 элементов;
@@ -482,6 +678,7 @@ getFinalWord($finalClaim, $finalEncryptedWord);
 
 
 
+//------------------------------------------------ Доработки
 
 //Проверяю черные поля
 echo ("<br>\n");
@@ -501,39 +698,7 @@ for ($i = 0; $i < count($resultArr); $i++) {
 echo ("Все черные блоки обнаружены!" . "<br>\n");
 
 
-//Проверяет можно ли ячейку сделать черной;
-function checkBlackCell($resultArr, $row, $column, $maxi, $maxj)
-{
-  $i = $row;
-  $j = $column;
-  $a = $resultArr;
 
-  if ($i + 1 < $maxi) {
-    if (checkLetters($a[$i + 1][$j]) === false) {
-      return false;
-    }
-  }
-
-  if ($i - 1 >= 0) {
-    if (checkLetters($a[$i - 1][$j]) === false) {
-      return false;
-    }
-  }
-
-  if ($j + 1 < $maxj) {
-    if (checkLetters($a[$i][$j + 1]) === false) {
-      return false;
-    }
-  }
-
-  if ($j - 1 >= 0) {
-    if (checkLetters($a[$i][$j - 1]) === false) {
-      return false;
-    }
-  }
-
-  return true;
-}
 
 
 // echo ("<br>\n");
@@ -584,35 +749,9 @@ $verticalArr = $verticalArr[0];
 
 
 
-foreach ($horizontalArr as $h => $line) {
-  if (checkDigits(implode("", $line))) {
-    $myMap = createMap($line);
-    $answersArr = checkMap($myMap, $claim);
-    $horizontalArr = writeWord($horizontalArr, $answersArr, $h, $myMap,  count($line));
-  }
-}
 
-foreach ($verticalArr as $h => $line) {
-  if (checkDigits(implode("", $line))) {
-    echo ("Я НАШЕЛ СТРОКУ С БУКВОЙ" . "<br>\n");
-    echo (implode("", $line));
-    echo ("<br>\n");
-
-    $myMap = createMap($line);
-
-    echo ("ВОТ МОЯ КАРТА: " . "<br>\n");
-    echo ("Количество элементов в карте: " . count($myMap) . "<br>\n");
-
-
-    $answersArr = checkMap($myMap, $claim);
-
-    echo ("ВОТ массив answers: " . $answersArr . "<br>\n");
-    echo ("Количество элементов в массиве: " . count($answersArr) . "<br>\n");
-
-    echo ("А ВОТ ЭТО ЭЛЕМЕНТ h: " . $h . "<br>\n");
-    $verticalArr = writeWord($verticalArr, $answersArr, $h, $myMap,  count($line));
-  }
-}
+$horizontalArr = fillGaps($horizontalArr, $claim);
+$verticalArr = fillGaps($verticalArr, $claim);
 
 
 
@@ -624,183 +763,3 @@ echo "<br>\n";
 
 viewHorizontalResult($resultArr);
 viewVerticalResult($resultArr);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function writeWord($resultArr, $answersArr, $row = 0, $map, $columnMax = 0)
-{
-
-  var_dump($map);
-  echo ("ЭТО КОЛ-ВО ЭЛЕМЕНТОВ В КАРТЕ: " . count($map) . "<br>\n");
-  echo ("ЭТО answerARR : " . $answersArr[0] . "<br>\n");
-  echo ("ЭТО map[answersArr[0]] : " . $map[$answersArr[0]] . "<br>\n");
-
-  $i = $row;
-
-  foreach ($map as $word => $pos) {
-    if ($pos - 1 >= 0) {
-      $column = $pos - 1;
-    } else {
-      $column = $pos;
-    }
-  }
-  // $column = (int)$map[$answersArr[0]];
-  echo ("ЭТО СТОЛБЕЦ: " . $column . "<br>\n");
-
-  echo ("ЭТО СТРОКА В КОТОРОЙ Я БУДУ СЛИВАТЬ: " . implode("", $resultArr[$i]) . "<br>\n");
-
-
-  if (count($answersArr) === 1) {
-    // echo ("Записываю результат:" . $answersArr[0] . "<br>\n");
-    $result = preg_split("//u", $answersArr[0], -1, PREG_SPLIT_NO_EMPTY);
-    $resultCount = 0;
-    for ($j = $column; $j < $columnMax; $j++) {
-      $resultArr[$i][$j] = $result[$resultCount];
-      $resultCount++;
-    }
-  }
-  return $resultArr;
-}
-
-function checkDigits($word)
-{
-  return preg_match('/[\d]/', $word) ? true : false;
-}
-
-//Формируем карту соответствий; Проходимся по строке и записываем возможные слова;
-//Номер символа в строке => Слово; Номер строки возьмем снаружи;
-//Возвращает массив; Номер элемента в строке => Слово
-function createMap($line)
-{
-  $findWords = [];
-  $currentWord = "";
-  for ($i = 0; $i < count($line); $i++) {
-
-    // echo ("Это currentWord в createMap перед обнулением: " . $currentWord . "<br>\n");
-    $currentWord = "";
-    $flag = false;
-    while ($line[$i] !== "." && $i < count($line)) {
-      // echo ("Это символ line[i] : " . $line[$i] . "<br>\n");
-      $currentWord = $currentWord . $line[$i];
-      if (checkLetters($line[$i]) === false) {
-        $flag = true;
-      }
-      if ($i + 1 < count($line)) {
-        // echo ("Это currentWord на каждой иттерации: " . $currentWord . "<br>\n");
-        // echo ("Это условие flag: " . $flag . "<br>\n");
-        // echo ("Это условие strlen: " . strlen($currentWord) . "<br>\n");
-
-        if ($line[$i + 1] === "." && ($flag === true) && (strlen($currentWord) > 1)) {
-          array_push($findWords, $currentWord);
-        }
-      } else {
-        if (($flag === true) && (strlen($currentWord) > 1)) {
-          var_dump($currentWord);
-          echo ("<br>\n");
-          array_push($findWords, $currentWord);
-        }
-      }
-      $i++;
-    }
-  }
-
-  echo ("Найденные возможные слова по горизонтали: " . implode(", ", $findWords) . "<br>\n");
-  $horizontalMap = [];
-
-  //Формируем карту соответствий; 
-  //Номер символа в строке => Слово; Номер строки возьмем снаружи;
-  //Возвращаем карту;
-  foreach ($findWords as $p => $word) {
-    echo ("СТРОКА!!!!!!!!!!!!!!!!!!!!!!!!!!!" . implode("", $line) . "<br>\n");
-    echo ("СЛОВО!!!!!!!!!!!!!!!!!!!!!!!!!!!" .  $word . "<br>\n");
-
-    echo ("НАЙДЕННАЯ ПОЗИЦИЯ!!!!!!!!!!!!!!!!!!!!!!!!!!!" . strpos(implode("", $line), $word));
-    echo ("<br>\n");
-    $horizontalMap[$word] =  strpos(implode("", $line), $word); //поменял тут местами с № => $word; на $word => №
-  }
-
-  foreach ($horizontalMap as $p => $elem) {
-    echo ($p . " => " . $elem . "<br>\n");
-  }
-
-  return $horizontalMap;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-//Проверяет слова найденные по маске
-//Возвращает массив возможных слов;
-function checkMap($map, $claim)
-{
-  $answersArr = [];
-  foreach ($map as $word => $pos) {
-    echo ("word: " . $word . "<br>\n");
-    $word = preg_split("//u", $word, -1, PREG_SPLIT_NO_EMPTY);
-    $mask = getMask($word);
-    echo ("МАСКА: " . $mask . "<br>\n");
-    $name = count($word) . $mask . ".json";
-    echo ("ИМЯ JSON: " . $name . "<br>\n");
-    $words = checkCache($name, $mask, "https://poncy.ru/crossword/crossword-solve.json?mask=", 800000);
-    $encryptedWord = createEncrtyptedWord($word, $claim);
-    echo ("ШИФР: " . implode("", $encryptedWord) . "<br>\n");
-    $result = findMatch($words, $claim, $encryptedWord);
-    echo ("Количество элементов в МАССИВЕ: " . count($result) . "<br>\n");
-    $answersArr = addVariant($result, $answersArr);
-  }
-  echoResult($answersArr, array($encryptedWord));
-  return $answersArr;
-}
-
-
-//Создает шифр по слову
-//Возвращает полный шифр на слово $word
-function createEncrtyptedWord($word, $claim)
-{
-  $encryptedWord = [];
-  echo ("ПЕРЕДАННОЕ СЛОВО ДЛЯ СОЗДАНИИ МАСКИ: " . implode("", $word) . "<br>\n");
-
-  foreach ($word as $i => $letter) {
-    if (checkDigits($letter)) {
-      array_push($encryptedWord, $letter);
-      continue;
-    }
-    $currentClaim = findClaimByLetter($claim, $letter);
-    array_push($encryptedWord, findCurrentEncrypt($currentClaim, $claim));
-  }
-
-  echo ("ПОЛУЧЕННАЯ МАСКА: " . implode("", $encryptedWord) . "<br>\n");
-
-  return $encryptedWord;
-}
