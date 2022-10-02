@@ -1,7 +1,7 @@
 <?php
 
 ini_set('max_execution_time', 600);
-error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
+error_reporting(E_ERROR);
 
 
 
@@ -600,6 +600,7 @@ function getFinalWord($finalClaim, $finalEncryptedWord, $url = "https://poncy.ru
 
 //------------------------------------------------------------------------------------------------------------------- 
 
+
 // Исходные данные
 
 // $POST = {
@@ -631,6 +632,7 @@ $claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
 
 //url api
 $url = "https://poncy.ru/crossword/crossword-solve.json?mask=";
+
 
 //------------------------------------------------------------------------------------------------------------------- 
 
