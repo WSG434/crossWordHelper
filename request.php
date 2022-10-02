@@ -1,7 +1,11 @@
 <?php
 
 ini_set('max_execution_time', 600);
+error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 
+
+
+//---------------------------------------------------Загрузка данных
 //Функция получения данных;
 //Рекурсивная функция, которая собирает json в один массив слов;
 function getData($url = "", $mask = "", $count = 0, $i = 0)
@@ -29,8 +33,10 @@ function getData($url = "", $mask = "", $count = 0, $i = 0)
     $count -= 500;
     // usleep(1000000); // защита от бана; ждать 1 секунды; PASSED работает; Время загрузки: 1 ммин 24сек
     usleep(700000); // защита от бана; ждать 0.7 секунды; PASSED работает; Время загрузки: 43 сек
-    // usleep(500000); // защита от бана; ждать 0.5 секунды; BANNED не работает, забанило; Время загрузки: ?
-    //Вопрос: от количества запросов за короткое время или из-за маленького значения usleep? 
+    // usleep(500000); // защита от бана; ждать 0.5 секунды; BANNED  работает 1 раз, потом забанило; Время загрузки: 42 сек
+    //Забнило на 0.5; Вопрос: от количества запросов за короткое время или из-за маленького значения usleep? 
+    //Через 2-3 часа разбанило, попробовал еще раз 0.5 и все сработало; Банило похоже все же из-за количества запросов
+    // usleep(200000); // защита от бана; ждать 0. секунды; BANNED не работает, забанило;
 
     $array_from_recursion = getData("https://poncy.ru/crossword/next-result-page.json?mask=" . $mask . "&desc=&page=" . $i, $mask, $count, $i);
     $words = array_merge($myJson["words"], $array_from_recursion); //Сливаю два массива
@@ -54,6 +60,8 @@ function checkCache($name, $mask, $url = "https://poncy.ru/crossword/crossword-s
   }
   return $words;
 }
+
+//---------------------------------------------------Набор букв
 
 //Находит нужный массив с данными по шифру
 //Возвращает Набор букв
@@ -86,6 +94,10 @@ function findClaimByLetter($claim, $letter)
     }
   }
 }
+
+
+//---------------------------------------------------Шифры
+
 
 //Найти шифр по известному набору букв
 //Вощвращает цифру шифра
@@ -124,6 +136,9 @@ function createEncrtyptedWord($word, $claim)
   return $encryptedWord;
 }
 
+//---------------------------------------------------Поиск слов
+
+
 //Ищет совпадения в конкретном массиве слов с конкретным шифром; 
 //Принимает конкретный массив слов на конкретную букву, Набор всех букв, Конкретный шифр слова
 //Возвращает массив подходящих по шифру слов с текущего массива слов
@@ -138,7 +153,7 @@ function findMatch($words, $claim, $encryptedWord)
     foreach ($letters as $letter => $value) {
       //Проверка на 6 маску с неизвестной буквой
       if ($encryptedWord[(int)$letter] === "6") {
-        if (!$letters[$letter + 1]) { //Проверка на тот случай, если 6 маска в конце слова
+        if ($letter + 1 >= count($letters)) { //Проверка на тот случай, если 6 маска в конце слова
           array_push($resultWords, $currentWord);  //Записываем в результирующий массив
         }
         continue;
@@ -150,13 +165,16 @@ function findMatch($words, $claim, $encryptedWord)
       }
 
       //Если это была последняя буква, значит все остальные буквы попали в множества, значит записываем результат
-      if (!$letters[$letter + 1]) {
+      if ($letter + 1 >= count($letters)) {
         array_push($resultWords, $currentWord); //Записываем в результирующий массив
       }
     }
   }
   return $resultWords;
 }
+
+//---------------------------------------------------Вывод на экран
+
 
 //Вывод результата;
 //Вовзращает true/false; true - один или несколько результатов; false - нет результатов; + текстовый вывод
@@ -179,6 +197,40 @@ function echoResult($result, $encryptedWord, $n = 0)
   }
 }
 
+//Отобразить горизонтальные слова;
+function viewHorizontalResult($resultArr)
+{
+  echo ("<br>\n");
+  echo ("Слова по горизонтали: " . "<br>\n");
+  for ($i = 0; $i < count($resultArr); $i++) {
+    echo ("Слово №:" . $i + 1 . " ");
+    for ($j = 0; $j < count($resultArr[$i]); $j++) {
+      echo ($resultArr[$i][$j]);
+    }
+    echo ("<br>\n");
+  }
+  echo ("Горизонтальное отображение успешно завершено!" . "<br>\n");
+};
+
+//Отобразить вертикальные слова;
+function viewVerticalResult($resultArr)
+{
+  echo ("<br>\n");
+  echo ("Слова по вертикали: " . "<br>\n");
+  $countWords = count($resultArr[0]);
+  for ($i = 0; $i < $countWords; $i++) {
+    echo ("Слово №:" .  $i + 1 . " ");
+    for ($j = 0; $j < count($resultArr); $j++) {
+      echo ($resultArr[$j][$i]);
+    }
+    echo ("<br>\n");
+  }
+  echo ("Вертикальное отображение успешно завершено!" . "<br>\n");
+}
+
+//---------------------------------------------------Проверки
+
+
 //Проверка на наличие букв в строке/символ
 //Возвращает true/false;
 function checkLetters($word)
@@ -192,6 +244,44 @@ function checkDigits($word)
 {
   return preg_match('/[\d]/', $word) ? true : false;
 }
+
+//Проверяет можно ли ячейку сделать черной;
+//Возвращает новый результирующий массив
+function checkBlackCell($resultArr, $row, $column, $maxi, $maxj)
+{
+  $i = $row;
+  $j = $column;
+  $a = $resultArr;
+
+  if ($i + 1 < $maxi) {
+    if (checkLetters($a[$i + 1][$j]) === false) {
+      return false;
+    }
+  }
+
+  if ($i - 1 >= 0) {
+    if (checkLetters($a[$i - 1][$j]) === false) {
+      return false;
+    }
+  }
+
+  if ($j + 1 < $maxj) {
+    if (checkLetters($a[$i][$j + 1]) === false) {
+      return false;
+    }
+  }
+
+  if ($j - 1 >= 0) {
+    if (checkLetters($a[$i][$j - 1]) === false) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+//---------------------------------------------------Создание маски
+
 
 //Генерация маски исходя из текущего состояния массива
 //Возвращает строку с маской
@@ -216,6 +306,9 @@ function createMask($letter, $count)
   return $mask;
 }
 
+//---------------------------------------------------Агрегация подходящих слов
+
+
 //Добавить слова/слово в массив возможных вариантов ответов
 //Принимает два массива: $result - слова которые нужно добавить, $answersArr - куда нужно добавить
 //Возващает массив $answersArr 
@@ -229,6 +322,9 @@ function addVariant($result, $answersArr)
   return $answersArr;
 }
 
+//---------------------------------------------------Изменение результирующего массива
+
+
 //Записать ответ в результирующий массив
 function addResult($answersArr, $resultArr, $i)
 {
@@ -240,6 +336,158 @@ function addResult($answersArr, $resultArr, $i)
   }
   return $resultArr;
 }
+
+//Выявляю черные поля
+//Возвращает новый результирующий массив
+function fillBlackFields($resultArr)
+{
+  for ($i = 0; $i < count($resultArr); $i++) {
+    for ($j = 0; $j < count($resultArr[$i]); $j++) {
+      if ($resultArr[$i][$j] == "6") {
+        if (checkBlackCell($resultArr, $i, $j, count($resultArr), count($resultArr[$i]))) {
+          $resultArr[$i][$j] = ".";
+        }
+      }
+    }
+  }
+
+  return $resultArr;
+}
+
+//Записать найденное неразгаданное слово в строку
+//Возвращает результирующий массив
+function writeWord($resultArr, $answersArr, $row, $map, $columnMax = 0)
+{
+  foreach ($map as $word => $pos) {
+    if ($pos - 1 >= 0) {
+      $column = $pos - 1;
+    } else {
+      $column = $pos;
+    }
+  }
+
+  if (count($answersArr) === 1) {
+    $result = preg_split("//u", $answersArr[0], -1, PREG_SPLIT_NO_EMPTY);
+    $resultCount = 0;
+    $i = $row;
+    for ($j = $column; $j < $columnMax; $j++) {
+      $resultArr[$i][$j] = $result[$resultCount];
+      $resultCount++;
+    }
+  }
+  return $resultArr;
+}
+
+
+//---------------------------------------------------Работа вертикальными словами
+
+
+//Возращает конкретное слово по вертикали из колонки $numberOfWord массива $arr
+function getVerticalWord($numberOfWord, $arr)
+{
+  $result = [];
+  for ($i = 0; $i < count($arr); $i++) {
+    array_push($result, $arr[$i][$numberOfWord]);
+  }
+  return $result;
+}
+
+//Создает массивы Шифров и Слов по вертикали
+//Возвращает массив, состоящий из двух массивов 1 - слова, 2 - шифры
+function createVerticalArr($resultArr, $encryptedWords)
+{
+  $verticalEncryptedWords = [];
+  $verticalWords = [];
+  $countWords = count($resultArr[0]);
+  for ($i = 0; $i < $countWords; $i++) {
+    array_push($verticalEncryptedWords, getVerticalWord($i, $encryptedWords));
+    array_push($verticalWords, getVerticalWord($i, $resultArr));
+  }
+  return ([$verticalWords, $verticalEncryptedWords]);
+}
+
+
+//Слияние вертикального и горизонтального массивов
+//Возвращает результат слияиня в виде горизонтального массива
+function mergeVerticalHorizontal($verticalArr, $horizontalArr)
+{
+  $countWords = count($verticalArr[0]);
+  for ($i = 0; $i < $countWords; $i++) { //0 .. 5
+
+    for ($j = 0; $j < count($verticalArr); $j++) { // 0 .. 10
+      $horizontalArr[$i][$j] = $verticalArr[$j][$i];
+    }
+  }
+  return $horizontalArr;
+}
+
+
+//---------------------------------------------------Работа с картой ненайденных слов
+
+//Формируем карту соответствий; Проходимся по строке и записываем возможные слова;
+//Слово => Номер символа в строке где нашли;
+//Возвращает массив;  Слово => Номер элемента в строке
+function createMap($line)
+{
+  //Находим все возможные слова и записываем их в массив
+  $findWords = [];
+  $currentWord = "";
+  for ($i = 0; $i < count($line); $i++) {
+    $currentWord = "";
+    $flag = false;
+    while ($line[$i] !== "." && $i < count($line)) {
+      $currentWord = $currentWord . $line[$i];
+      if (checkLetters($line[$i]) === false) {
+        $flag = true;
+      }
+      if ($i + 1 < count($line)) {
+        if ($line[$i + 1] === "." && ($flag === true) && (strlen($currentWord) > 1)) {
+          array_push($findWords, $currentWord);
+        }
+      } else {
+        if (($flag === true) && (strlen($currentWord) > 1)) {
+          array_push($findWords, $currentWord);
+        }
+      }
+      if ($i + 1 < count($line)) {
+        $i++;
+      } else {
+        break;
+      }
+    }
+  }
+
+  $horizontalMap = [];
+  //Формируем карту соответствий; 
+  //Номер символа в строке => Слово; Номер строки возьмем снаружи;
+  //Возвращаем карту;
+  foreach ($findWords as $p => $word) {
+    $horizontalMap[$word] =  strpos(implode("", $line), $word); //поменял тут местами с № => $word; на $word => №
+  }
+
+  return $horizontalMap;
+}
+
+//Проверяет слова найденные по маске
+//Возвращает массив возможных слов;
+function checkMap($map, $claim)
+{
+  $answersArr = [];
+  foreach ($map as $word => $pos) {
+    $word = preg_split("//u", $word, -1, PREG_SPLIT_NO_EMPTY);
+    $mask = getMask($word);
+    $name = count($word) . $mask . ".json";
+    $words = checkCache($name, $mask, "https://poncy.ru/crossword/crossword-solve.json?mask=", 800000);
+    $encryptedWord = createEncrtyptedWord($word, $claim);
+    $result = findMatch($words, $claim, $encryptedWord);
+    $answersArr = addVariant($result, $answersArr);
+  }
+  echoResult($answersArr, $encryptedWord);
+  return $answersArr;
+}
+
+//---------------------------------------------------Конечные функции, включающие в себя множество других вызовов функий
+
 
 //Находит разагдки для кроссворда; 
 //Принимает Результирующий массив, Массив шифров, Набор букв, текущая иттерацию цикла, url адрес сайта с api
@@ -280,126 +528,6 @@ function solveCrossword($resultArr, $encryptedWords, $claim, $url = "https://pon
   return $resultArr;
 }
 
-//Возращает конкретное слово по вертикали из колонки $numberOfWord массива $arr
-function getVerticalWord($numberOfWord, $arr)
-{
-  $result = [];
-  for ($i = 0; $i < count($arr); $i++) {
-    array_push($result, $arr[$i][$numberOfWord]);
-  }
-  return $result;
-}
-
-//Создает массивы Шифров и Слов по вертикали
-//Возвращает массив, состоящий из двух массивов 1 - слова, 2 - шифры
-function createVerticalArr($resultArr, $encryptedWords)
-{
-  $verticalEncryptedWords = [];
-  $verticalWords = [];
-  $countWords = count($resultArr[0]);
-  for ($i = 0; $i < $countWords; $i++) {
-    array_push($verticalEncryptedWords, getVerticalWord($i, $encryptedWords));
-    array_push($verticalWords, getVerticalWord($i, $resultArr));
-  }
-  return ([$verticalWords, $verticalEncryptedWords]);
-}
-
-//Отобразить горизонтальные слова;
-function viewHorizontalResult($resultArr)
-{
-  echo ("<br>\n");
-  echo ("Слова по горизонтали: " . "<br>\n");
-  for ($i = 0; $i < count($resultArr); $i++) {
-    echo ("Слово №:" . $i + 1 . " ");
-    for ($j = 0; $j < count($resultArr[$i]); $j++) {
-      echo ($resultArr[$i][$j]);
-    }
-    echo ("<br>\n");
-  }
-  echo ("Горизонтальное отображение успешно завершено!" . "<br>\n");
-};
-
-//Отобразить вертикальные слова;
-function viewVerticalResult($resultArr)
-{
-  echo ("<br>\n");
-  echo ("Слова по вертикали: " . "<br>\n");
-  $countWords = count($resultArr[0]);
-  for ($i = 0; $i < $countWords; $i++) {
-    echo ("Слово №:" .  $i + 1 . " ");
-    for ($j = 0; $j < count($resultArr); $j++) {
-      echo ($resultArr[$j][$i]);
-    }
-    echo ("<br>\n");
-  }
-  echo ("Вертикальное отображение успешно завершено!" . "<br>\n");
-}
-
-//Слияние вертикального и горизонтального массивов
-//Возвращает результат слияиня в виде горизонтального массива
-function mergeVerticalHorizontal($verticalArr, $horizontalArr)
-{
-  $countWords = count($verticalArr[0]);
-  for ($i = 0; $i < $countWords; $i++) { //0 .. 5
-
-    for ($j = 0; $j < count($verticalArr); $j++) { // 0 .. 10
-      $horizontalArr[$i][$j] = $verticalArr[$j][$i];
-    }
-  }
-  return $horizontalArr;
-}
-
-//Выявляю черные поля
-//Возвращает новый результирующий массив
-function fillBlackFields($resultArr)
-{
-  for ($i = 0; $i < count($resultArr); $i++) {
-    for ($j = 0; $j < count($resultArr[$i]); $j++) {
-      if ($resultArr[$i][$j] == "6") {
-        if (checkBlackCell($resultArr, $i, $j, count($resultArr), count($resultArr[$i]))) {
-          $resultArr[$i][$j] = ".";
-        }
-      }
-    }
-  }
-
-  return $resultArr;
-}
-
-//Проверяет можно ли ячейку сделать черной;
-//Возвращает новый результирующий массив
-function checkBlackCell($resultArr, $row, $column, $maxi, $maxj)
-{
-  $i = $row;
-  $j = $column;
-  $a = $resultArr;
-
-  if ($i + 1 < $maxi) {
-    if (checkLetters($a[$i + 1][$j]) === false) {
-      return false;
-    }
-  }
-
-  if ($i - 1 >= 0) {
-    if (checkLetters($a[$i - 1][$j]) === false) {
-      return false;
-    }
-  }
-
-  if ($j + 1 < $maxj) {
-    if (checkLetters($a[$i][$j + 1]) === false) {
-      return false;
-    }
-  }
-
-  if ($j - 1 >= 0) {
-    if (checkLetters($a[$i][$j - 1]) === false) {
-      return false;
-    }
-  }
-
-  return true;
-}
 
 //Находит оставшиеся неразгаданые пробелы и заполняет их
 //Возвращает новый результирующий массив
@@ -416,87 +544,7 @@ function fillGaps($arr, $claim)
 }
 
 
-//Формируем карту соответствий; Проходимся по строке и записываем возможные слова;
-//Слово => Номер символа в строке где нашли;
-//Возвращает массив;  Слово => Номер элемента в строке
-function createMap($line)
-{
-  //Находим все возможные слова и записываем их в массив
-  $findWords = [];
-  $currentWord = "";
-  for ($i = 0; $i < count($line); $i++) {
-    $currentWord = "";
-    $flag = false;
-    while ($line[$i] !== "." && $i < count($line)) {
-      $currentWord = $currentWord . $line[$i];
-      if (checkLetters($line[$i]) === false) {
-        $flag = true;
-      }
-      if ($i + 1 < count($line)) {
-        if ($line[$i + 1] === "." && ($flag === true) && (strlen($currentWord) > 1)) {
-          array_push($findWords, $currentWord);
-        }
-      } else {
-        if (($flag === true) && (strlen($currentWord) > 1)) {
-          array_push($findWords, $currentWord);
-        }
-      }
-      $i++;
-    }
-  }
-
-  $horizontalMap = [];
-  //Формируем карту соответствий; 
-  //Номер символа в строке => Слово; Номер строки возьмем снаружи;
-  //Возвращаем карту;
-  foreach ($findWords as $p => $word) {
-    $horizontalMap[$word] =  strpos(implode("", $line), $word); //поменял тут местами с № => $word; на $word => №
-  }
-
-  return $horizontalMap;
-}
-
-//Проверяет слова найденные по маске
-//Возвращает массив возможных слов;
-function checkMap($map, $claim)
-{
-  $answersArr = [];
-  foreach ($map as $word => $pos) {
-    $word = preg_split("//u", $word, -1, PREG_SPLIT_NO_EMPTY);
-    $mask = getMask($word);
-    $name = count($word) . $mask . ".json";
-    $words = checkCache($name, $mask, "https://poncy.ru/crossword/crossword-solve.json?mask=", 800000);
-    $encryptedWord = createEncrtyptedWord($word, $claim);
-    $result = findMatch($words, $claim, $encryptedWord);
-    $answersArr = addVariant($result, $answersArr);
-  }
-  echoResult($answersArr, $encryptedWord);
-  return $answersArr;
-}
-
-//Записать найденное неразгаданное слово в строку
-//Возвращает результирующий массив
-function writeWord($resultArr, $answersArr, $row = 0, $map, $columnMax = 0)
-{
-  foreach ($map as $word => $pos) {
-    if ($pos - 1 >= 0) {
-      $column = $pos - 1;
-    } else {
-      $column = $pos;
-    }
-  }
-
-  if (count($answersArr) === 1) {
-    $result = preg_split("//u", $answersArr[0], -1, PREG_SPLIT_NO_EMPTY);
-    $resultCount = 0;
-    $i = $row;
-    for ($j = $column; $j < $columnMax; $j++) {
-      $resultArr[$i][$j] = $result[$resultCount];
-      $resultCount++;
-    }
-  }
-  return $resultArr;
-}
+//---------------------------------------------------Результирующее слово
 
 
 //Собирает Набор букв для Результирующего слова
@@ -569,7 +617,6 @@ $resultArr = [
   ["4", "2", "1", "3", "6", "3", "3", "4", "5", "6"],
 ];
 
-
 //Зашифрованные слова
 $encryptedWords = [
   ["1", "1", "5", "3", "2", "4", "1", "5", "2", "6"],
@@ -616,9 +663,10 @@ $verticalArr = fillGaps($verticalArr, $claim);
 $resultArr = mergeVerticalHorizontal($verticalArr, $horizontalArr);
 
 //Выводим результат
-
 viewHorizontalResult($resultArr);
 viewVerticalResult($resultArr);
+
+
 
 //Результирующее слово
 //Входные данные для поиска
