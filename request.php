@@ -6,6 +6,8 @@ ini_set('max_execution_time', 600);
 //Рекурсивная функция, которая собирает json в один массив слов;
 function getData($url = "", $mask = "", $count = 0, $i = 0)
 {
+
+  //Меняю контекст, чтобы сервер не банил;
   $context = stream_context_create(
     array(
       "http" => array(
@@ -25,8 +27,7 @@ function getData($url = "", $mask = "", $count = 0, $i = 0)
   if ($count - 500 > 0) {
     $i++;
     $count -= 500;
-    usleep(500000); // защита от бана; ждать 0.3 секунды
-    // usleep(1000000); // защита от бана; ждать 1 секунду
+    usleep(500000); // защита от бана; ждать 0.5 секунды
     $array_from_recursion = getData("https://poncy.ru/crossword/next-result-page.json?mask=" . $mask . "&desc=&page=" . $i, $mask, $count, $i);
     $words = array_merge($myJson["words"], $array_from_recursion); //Сливаю два массива
     return $words;
@@ -43,8 +44,7 @@ function checkCache($name, $mask, $url = "https://poncy.ru/crossword/crossword-s
   if (file_exists("./data/" . $name)) {
     $words = json_decode(file_get_contents("./data/" . $name), true); //чтение локально
   } else {
-    // ждать 0.2 секунды, защита от бана сервера
-    usleep($sleepTime);
+    usleep($sleepTime); // ждать 0.2 секунды, защита от бана сервера
     $words = getData($url . $mask, $mask); //отправка запроса на сервер
     file_put_contents("./data/" . $name, json_encode($words));
   }
@@ -108,8 +108,6 @@ function findCurrentEncrypt($currentClaim, $claim)
 function createEncrtyptedWord($word, $claim)
 {
   $encryptedWord = [];
-  echo ("ПЕРЕДАННОЕ СЛОВО ДЛЯ СОЗДАНИИ МАСКИ: " . implode("", $word) . "<br>\n");
-
   foreach ($word as $i => $letter) {
     if (checkDigits($letter)) {
       array_push($encryptedWord, $letter);
@@ -118,8 +116,6 @@ function createEncrtyptedWord($word, $claim)
     $currentClaim = findClaimByLetter($claim, $letter);
     array_push($encryptedWord, findCurrentEncrypt($currentClaim, $claim));
   }
-
-  echo ("ПОЛУЧЕННАЯ МАСКА: " . implode("", $encryptedWord) . "<br>\n");
 
   return $encryptedWord;
 }
@@ -227,7 +223,6 @@ function addVariant($result, $answersArr)
 function addResult($answersArr, $resultArr, $i)
 {
   if (count($answersArr) === 1) {
-    // echo ("Записываю результат:" . $answersArr[0] . "<br>\n");
     $result = preg_split("//u", $answersArr[0], -1, PREG_SPLIT_NO_EMPTY);
     foreach ($result as $r => $letter) {
       $resultArr[$i][$r] = $letter;
@@ -266,17 +261,6 @@ function solveCrossword($resultArr, $encryptedWords, $claim, $i, $url = "https:/
         $answersArr = addVariant($result, $answersArr);
       }
     }
-
-
-    // echo ("ITOGO count answerArr: " . count($answersArr) . "<br>\n");
-    // echo ("ITOGO implode answersArr: " . implode(", ", $answersArr) . "<br>\n");
-    // //АВТОКРАТИЯ "\u0410\u041b\u042c\u041a\u0410\u041d\u0410\u0414\u0420\u0415"
-
-    // foreach ($answersArr as $o => $answer) {
-    //   // echo ("ITOGO result: " . count($answer) . "<br>\n");
-    //   // echo ("ITOGO result: " . implode(", ", $answer) . "<br>\n");
-    //   echo ("ITOGO current №" . $o .  ": " . $answer . "<br>\n");
-    // }
 
 
     // Отображаю результат
@@ -360,21 +344,20 @@ function mergeVerticalHorizontal($verticalArr, $horizontalArr)
 //Возвращает результирующий массив
 function fillBlackFields($resultArr)
 {
-  echo ("<br>\n");
-  echo ("Слова по горизонтали: " . "<br>\n");
   for ($i = 0; $i < count($resultArr); $i++) {
-    echo ("Слово №:" . $i + 1 . " ");
     for ($j = 0; $j < count($resultArr[$i]); $j++) {
       if ($resultArr[$i][$j] == "6") {
         if (checkBlackCell($resultArr, $i, $j, count($resultArr), count($resultArr[$i]))) {
           $resultArr[$i][$j] = ".";
         }
       }
-      echo ($resultArr[$i][$j]);
     }
-    echo ("<br>\n");
   }
+  echo ("<br>\n");
   echo ("Все черные блоки обнаружены!" . "<br>\n");
+  echo ("Изменения внесены в результирующий массив." . "<br>\n");
+  echo ("<br>\n");
+
   return $resultArr;
 }
 
@@ -429,34 +412,27 @@ function fillGaps($arr, $claim)
 
 
 //Формируем карту соответствий; Проходимся по строке и записываем возможные слова;
-//Номер символа в строке => Слово; Номер строки возьмем снаружи;
-//Возвращает массив; Номер элемента в строке => Слово
+//Слово => Номер символа в строке где нашли;
+//Возвращает массив;  Слово => Номер элемента в строке
 function createMap($line)
 {
+  //Находим все возможные слова и записываем их в массив
   $findWords = [];
   $currentWord = "";
   for ($i = 0; $i < count($line); $i++) {
-    // echo ("Это currentWord в createMap перед обнулением: " . $currentWord . "<br>\n");
     $currentWord = "";
     $flag = false;
     while ($line[$i] !== "." && $i < count($line)) {
-      // echo ("Это символ line[i] : " . $line[$i] . "<br>\n");
       $currentWord = $currentWord . $line[$i];
       if (checkLetters($line[$i]) === false) {
         $flag = true;
       }
       if ($i + 1 < count($line)) {
-        // echo ("Это currentWord на каждой иттерации: " . $currentWord . "<br>\n");
-        // echo ("Это условие flag: " . $flag . "<br>\n");
-        // echo ("Это условие strlen: " . strlen($currentWord) . "<br>\n");
-
         if ($line[$i + 1] === "." && ($flag === true) && (strlen($currentWord) > 1)) {
           array_push($findWords, $currentWord);
         }
       } else {
         if (($flag === true) && (strlen($currentWord) > 1)) {
-          var_dump($currentWord);
-          echo ("<br>\n");
           array_push($findWords, $currentWord);
         }
       }
@@ -464,23 +440,12 @@ function createMap($line)
     }
   }
 
-  echo ("Найденные возможные слова по горизонтали: " . implode(", ", $findWords) . "<br>\n");
   $horizontalMap = [];
-
   //Формируем карту соответствий; 
   //Номер символа в строке => Слово; Номер строки возьмем снаружи;
   //Возвращаем карту;
   foreach ($findWords as $p => $word) {
-    echo ("СТРОКА!!!!!!!!!!!!!!!!!!!!!!!!!!!" . implode("", $line) . "<br>\n");
-    echo ("СЛОВО!!!!!!!!!!!!!!!!!!!!!!!!!!!" .  $word . "<br>\n");
-
-    echo ("НАЙДЕННАЯ ПОЗИЦИЯ!!!!!!!!!!!!!!!!!!!!!!!!!!!" . strpos(implode("", $line), $word));
-    echo ("<br>\n");
     $horizontalMap[$word] =  strpos(implode("", $line), $word); //поменял тут местами с № => $word; на $word => №
-  }
-
-  foreach ($horizontalMap as $p => $elem) {
-    echo ($p . " => " . $elem . "<br>\n");
   }
 
   return $horizontalMap;
@@ -492,20 +457,15 @@ function checkMap($map, $claim)
 {
   $answersArr = [];
   foreach ($map as $word => $pos) {
-    echo ("word: " . $word . "<br>\n");
     $word = preg_split("//u", $word, -1, PREG_SPLIT_NO_EMPTY);
     $mask = getMask($word);
-    echo ("МАСКА: " . $mask . "<br>\n");
     $name = count($word) . $mask . ".json";
-    echo ("ИМЯ JSON: " . $name . "<br>\n");
     $words = checkCache($name, $mask, "https://poncy.ru/crossword/crossword-solve.json?mask=", 800000);
     $encryptedWord = createEncrtyptedWord($word, $claim);
-    echo ("ШИФР: " . implode("", $encryptedWord) . "<br>\n");
     $result = findMatch($words, $claim, $encryptedWord);
-    echo ("Количество элементов в МАССИВЕ: " . count($result) . "<br>\n");
     $answersArr = addVariant($result, $answersArr);
   }
-  echoResult($answersArr, array($encryptedWord));
+  echoResult($answersArr, $encryptedWord);
   return $answersArr;
 }
 
@@ -513,14 +473,6 @@ function checkMap($map, $claim)
 //Возвращает результирующий массив
 function writeWord($resultArr, $answersArr, $row = 0, $map, $columnMax = 0)
 {
-
-  var_dump($map);
-  echo ("ЭТО КОЛ-ВО ЭЛЕМЕНТОВ В КАРТЕ: " . count($map) . "<br>\n");
-  echo ("ЭТО answerARR : " . $answersArr[0] . "<br>\n");
-  echo ("ЭТО map[answersArr[0]] : " . $map[$answersArr[0]] . "<br>\n");
-
-  $i = $row;
-
   foreach ($map as $word => $pos) {
     if ($pos - 1 >= 0) {
       $column = $pos - 1;
@@ -528,16 +480,11 @@ function writeWord($resultArr, $answersArr, $row = 0, $map, $columnMax = 0)
       $column = $pos;
     }
   }
-  // $column = (int)$map[$answersArr[0]];
-  echo ("ЭТО СТОЛБЕЦ: " . $column . "<br>\n");
-
-  echo ("ЭТО СТРОКА В КОТОРОЙ Я БУДУ СЛИВАТЬ: " . implode("", $resultArr[$i]) . "<br>\n");
-
 
   if (count($answersArr) === 1) {
-    // echo ("Записываю результат:" . $answersArr[0] . "<br>\n");
     $result = preg_split("//u", $answersArr[0], -1, PREG_SPLIT_NO_EMPTY);
     $resultCount = 0;
+    $i = $row;
     for ($j = $column; $j < $columnMax; $j++) {
       $resultArr[$i][$j] = $result[$resultCount];
       $resultCount++;
