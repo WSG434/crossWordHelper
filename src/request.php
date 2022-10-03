@@ -334,54 +334,17 @@ function addResult($answersArr, $resultArr, $i)
 //Возвращает результирующий массив
 function writeWord($resultArr, $answersArr, $row, $map, $columnMax, $check = false)
 {
-  // foreach ($map as $word => $pos) {
-  //   echo ("ЭТО СЛОВО word из map " . $word . "<br>\n");
-  //   echo ("ЭТО ЕГО ПОЗИЦИЯ column=pos из map " . $pos . "<br>\n");
-  //   echo ("ЭТО answerARR[0]  " . $answersArr[0] . "<br>\n");
-  //   if ($word === $answersArr[0]) {
-  //     $column = $pos;
-  //   }
-  // }
-  // echo ("ЭТО КОНЕЦ foreach и column " . $column . "<br>\n");
-  // if ($count)
-  //   echo ("ЭТО ЕГО ПОЗИЦИЯ column=pos из map " . $pos . "<br>\n");
-
   $i = $row;
   if (count($answersArr) === 1) {
     $column = $map[$answersArr[0]];
     $result = preg_split("//u", $answersArr[0], -1, PREG_SPLIT_NO_EMPTY);
     $resultCount = 0;
-    $flag = false;
-    echo ("ЭТО С КАКОГО СИМВОЛА МЫ РАБОТАЕМ " . $column . "<br>\n");
-    echo ("ЭТО СЛОВО, КОТОРОЕ МЫ ВСТАВЛЯЕМ " . $answersArr[0] . "<br>\n");
-    echo ("ЭТО ДЛИНА ЭТОГО СЛОВА " . mb_strlen($answersArr[0]) . "<br>\n");
-    echo ("ЭТО СТРОКА КУДА МЫ ВСТАВЛЯЕМ СЛОВО " . implode("", $resultArr[$i]) . "<br>\n");
-
-    // for ($j = $column; $j < ($column + mb_strlen($answersArr[0]) - 1); $j++) {
-    //   if (!$resultArr[$i][$j] === $result[$resultCount]) {
-    //     if (!checkDigits($resultArr[$i][$j])) {
-    //       $flag = true;
-    //       break;
-    //     }
-    //   }
-    // }
 
     for ($j = $column; $j < ($column + mb_strlen($answersArr[0])); $j++) {
-      echo ("ДО ЗАМЕНЫ " . "<br>\n");
-      echo ("ЭТО ТЕКУЩИЙ СИМВОЛ resultArr[i][j] " . $resultArr[$i][$j] . "<br>\n");
-      echo ("ЭТО СИМВОЛ КОТОРЫЙ ВСТАВЛЯЕМ result[resultCount] " . $result[$resultCount] . "<br>\n");
-
-      if ($resultArr[$i][$j] === ".") {
-        break;
-      }
       $resultArr[$i][$j] = $result[$resultCount];
-      echo ("ПОСЛЕ ЗАМЕНЫ " . "<br>\n");
-      echo ("ЭТО ТЕКУЩИЙ СИМВОЛ resultArr[i][j] " . $resultArr[$i][$j] . "<br>\n");
-      echo ("ЭТО СИМВОЛ КОТОРЫЙ ВСТАВЛЯЕМ result[resultCount] " . $result[$resultCount] . "<br>\n");
       $resultCount++;
     }
   }
-
 
   if ($check) {
     for ($j = 0; $j < $columnMax; $j++) {
@@ -425,11 +388,10 @@ function createVerticalArr($resultArr, $encryptedWords)
 
 //Слияние вертикального и горизонтального массивов
 //Возвращает результат слияиня в виде горизонтального массива
-function mergeVerticalHorizontal($verticalArr, $horizontalArr)
+function mergeVerticalToHorizontal($verticalArr, $horizontalArr)
 {
   $countWords = count($verticalArr[0]);
   for ($i = 0; $i < $countWords; $i++) { //0 .. 5
-
     for ($j = 0; $j < count($verticalArr); $j++) { // 0 .. 10
       if (checkDigits($horizontalArr[$i][$j])) {
         $horizontalArr[$i][$j] = $verticalArr[$j][$i];
@@ -463,7 +425,6 @@ function createMap($line)
         if (!$flag) {
           $currentWord = $currentWord . $line[$j];
           if ((mb_strlen($currentWord) > 1) && checkDigits($currentWord)) {
-            echo ("ЭТО СЛОВО, КОТОРОЕ ПОПАДАТ В КАРТУ: " . $currentWord . "<br>\n");
             array_push($findWords, $currentWord);
           } else {
             break;
@@ -485,14 +446,7 @@ function createMap($line)
   //Формируем карту соответствий; 
   //Возвращаем карту;
   foreach ($findWords as $p => $word) {
-    echo ("ЭТО СЛОВО, С КОТОРЫМ МЫ РАБОТАЕМ: "  . $word . "<br>\n");
-    echo ("ЭТО СТРОКА ОТКУДА МЫ ВЗЯЛИ ЭТО СЛОВО: " . implode("", $line) . "<br>\n");
-    echo ("ЭТО НА КАКОМ СИМВОЛЕ МЫ НАШЛИ ЭТО ПОДСТРОКУ strpos: " . strpos(implode("", $line), $word) . "<br>\n");
-    echo ("ЭТО НА КАКОМ СИМВОЛЕ МЫ НАШЛИ ЭТО ПОДСТРОКУ mb_strpos: " . mb_strpos(implode("", $line), $word) . "<br>\n");
-    echo ("ЭТО НА КАКОМ СИМВОЛЕ МЫ НАШЛИ ЭТО ПОДСТРОКУ mb_strpos UTF-8: " . mb_strpos(implode("", $line), $word, 0, 'UTF-8') . "<br>\n");
     $horizontalMap[$word] =  mb_strpos(implode("", $line), $word); //поменял тут местами с № => $word; на $word => №
-
-    $horizontalMap[$word] =  mb_strpos(implode("", $line), $word, 0, 'UTF-8'); //поменял тут местами с № => $word; на $word => №
   }
 
   return $horizontalMap;
@@ -511,23 +465,13 @@ function checkMap($map, $claim)
     $words = checkCache($name, $mask, "https://poncy.ru/crossword/crossword-solve.json?mask=", 800000);
     $encryptedWord = createEncrtyptedWord($word, $claim);
     $result = findMatch($words, $claim, $encryptedWord);
-    // echo ("БЫЛО ОТПРАВЛЕНО СЛОВО " . implode("", $word) . "<br>\n");
-    // echo ("ВОТ МАСКА " . $mask . "<br>\n");
-    // echo ("ВОТ ШИФР " . $encryptedWord . "<br>\n");
-    // echo ("ВОТ РЕЗУЛЬТАТЫ " . "<br>\n");
-    // foreach ($result as $i => $res) {
-    //   echo ("ЭТО answersArr[" . $i . "]="  . $res . "<br>\n");
-    //   $newMap[$res] = $pos;
-    // }
     if (count($result) === 1) {
       $newMap[$result[0]] = $pos;
     }
     $answersArr = addVariant($result, $answersArr);
   }
 
-  // uasort($answersArr, 'sort_value_strlen');
-  usort($answersArr, 'sort_value_strlen');
-
+  // usort($answersArr, 'sort_value_strlen');
   // echoResult($answersArr, $encryptedWord);
   return [$answersArr, $newMap];
 }
@@ -675,9 +619,13 @@ $url = "https://poncy.ru/crossword/crossword-solve.json?mask=";
 
 //Вызов функций
 
+
+//--------------------------------0. Формируем массив Шифров
 //Формируем массив Шифров
 $encryptedWords = createEncrtyptedWords($resultArr, $claim);
 
+
+//--------------------------------1. Находим слова
 // Слова по горизонтали
 $horizontalResultArr = solveCrossword($resultArr, $encryptedWords, $claim, $url);
 
@@ -685,49 +633,42 @@ $horizontalResultArr = solveCrossword($resultArr, $encryptedWords, $claim, $url)
 $verticalArr = createVerticalArr($horizontalResultArr, $encryptedWords);
 $verticalResultArr = solveCrossword($verticalArr[0], $verticalArr[1], $claim, $url);
 
+
+//--------------------------------2. Обновляем данные между массивами
 //Слияние вертикального и горизонтального массивов
-$resultArr = mergeVerticalHorizontal($verticalResultArr, $horizontalResultArr);
-
-
-//Создаем актуальные массивы
-$horizontalArr = $resultArr;
-$verticalArr = createVerticalArr($resultArr, $encryptedWords);
+//Обновляем значения в массивах
+$horizontalArr = mergeVerticalToHorizontal($verticalResultArr, $horizontalResultArr);
+$verticalArr = createVerticalArr($horizontalArr, $encryptedWords);
 $verticalArr = $verticalArr[0];
 
 
+//--------------------------------3. Вставляем черные блоки
 //Вставляем черные блоки и заполняем пропущенные слова без учета черных блоков
 $horizontalArr = fillGaps($horizontalArr, $claim);
 $verticalArr = fillGaps($verticalArr, $claim, true);
 
-//-------------------------------------------dasdasdasdsad
-$resultArr = mergeVerticalHorizontal($verticalArr, $horizontalArr);
-//Выводим результат
-viewHorizontalResult($resultArr);
-viewVerticalResult($resultArr);
 
-//Создаем актуальные массивы
-$horizontalArr = $resultArr;
-$verticalArr = createVerticalArr($resultArr, $encryptedWords);
+//--------------------------------4. Обновляем данные между массивами
+//Обновляем значения в массивах
+$horizontalArr = mergeVerticalToHorizontal($verticalArr, $horizontalArr);
+$verticalArr = createVerticalArr($horizontalArr, $encryptedWords);
 $verticalArr = $verticalArr[0];
 
-//--------------------------------------------sadasdasdas
-
-//Заполняем уже с учетом черных блоками
+//--------------------------------5. Находим оставшиеся слова
+//Заполняем уже с учетом черных блоков
 $horizontalArr = fillGaps($horizontalArr, $claim);
 $verticalArr = fillGaps($verticalArr, $claim);
 
-viewHorizontalResult($horizontalArr);
-viewHorizontalResult($verticalArr);
 
+//--------------------------------6. Обновляем результирующий массив и выводим результат
 //Делаем слияние
-$resultArr = mergeVerticalHorizontal($verticalArr, $horizontalArr);
-
-
+$resultArr = mergeVerticalToHorizontal($verticalArr, $horizontalArr);
 //Выводим результат
 viewHorizontalResult($resultArr);
 viewVerticalResult($resultArr);
 
 
+//--------------------------------7. Находим результирующее слово и выводим его на экран
 //Результирующее слово
 //Входные данные для поиска
 $finalClaim = getFinalClaim($resultArr, $claim);
