@@ -1,8 +1,8 @@
 <?php
 
 ini_set('max_execution_time', 600);
-// error_reporting(E_ERROR);
-error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
+error_reporting(E_ERROR);
+// error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 
 
 
@@ -145,7 +145,7 @@ function createEncrtyptedWords($arr, $claim)
       if (!checkDigits($arr[$i][$j])) {
         if ($arr[$i][$j] === ".") {
           $arr[$i][$j] = "6";
-          echo ($arr[$i][$j]);
+          // echo ($arr[$i][$j]);
           continue;
         }
         $currentClaim = findClaimByLetter($claim, $arr[$i][$j]);
@@ -586,7 +586,8 @@ function getFinalWord($finalClaim, $finalEncryptedWord, $url = "https://poncy.ru
       array_push($resultArr, $result);
     }
   }
-  echoResult($resultArr, $finalEncryptedWord);
+  return $resultArr[0];
+  // echoResult($resultArr, $finalEncryptedWord);
 }
 
 //------------------------------------------------------------------------------------------------------------------- 
@@ -664,8 +665,8 @@ $verticalArr = fillGaps($verticalArr, $claim);
 //Делаем слияние
 $resultArr = mergeVerticalToHorizontal($verticalArr, $horizontalArr);
 //Выводим результат
-viewHorizontalResult($resultArr);
-viewVerticalResult($resultArr);
+// viewHorizontalResult($resultArr);
+// viewVerticalResult($resultArr);
 
 
 //--------------------------------7. Находим результирующее слово и выводим его на экран
@@ -675,6 +676,15 @@ $finalClaim = getFinalClaim($resultArr, $claim);
 $finalEncryptedWord = ["1", "1", "1", "2", "2", "2", "3", "3", "3"];
 
 //Поиск и вывод на экран
-echo ("<br>\n");
-echo ("Финальное слово: " . "<br>\n");
-getFinalWord($finalClaim, $finalEncryptedWord);
+$finalWord = getFinalWord($finalClaim, $finalEncryptedWord);
+
+//--------------------------------8. Отправляем ответ клиенту
+
+//Готовлю JSON для ответа клиенту
+$responseJSON = [
+  "resultArr" => $resultArr,
+  "finalWord" => $finalWord
+];
+
+$responseJSON = json_encode($responseJSON);
+echo $responseJSON;
