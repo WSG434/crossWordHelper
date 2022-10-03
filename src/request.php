@@ -1,7 +1,8 @@
 <?php
 
 ini_set('max_execution_time', 600);
-error_reporting(E_ERROR);
+// error_reporting(E_ERROR);
+error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 
 
 
@@ -158,6 +159,7 @@ function createEncrtyptedWords($arr, $claim)
     echo ("<br>\n");
   }
   echo ("Массив Шифров успешно сформирован!" . "<br>\n");
+  return $arr;
 }
 
 //---------------------------------------------------Поиск слов
@@ -169,6 +171,10 @@ function createEncrtyptedWords($arr, $claim)
 function findMatch($words, $claim, $encryptedWord)
 {
   $resultWords = [];
+  //Проверка на пустой массив слов;
+  if (!$words) {
+    return $resultWords;
+  }
   // Начинаю обходить массив данных и ищу совпадения
   foreach ($words as $word => $currentWord) {
     //Привожу строку к массиву символов
@@ -378,30 +384,53 @@ function fillBlackFields($resultArr)
   return $resultArr;
 }
 
+
+
 //Записать найденное неразгаданное слово в строку
 //Возвращает результирующий массив
-function writeWord($resultArr, $answersArr, $row, $map, $columnMax = 0)
+function writeWord($resultArr, $answersArr, $row, $map, $columnMax, $check = false)
 {
   foreach ($map as $word => $pos) {
-    if ($pos - 1 >= 0) {
-      $column = $pos - 1;
-    } else {
-      $column = $pos;
-    }
+    // if ($pos - 1 >= 0) {
+    //   $column = $pos - 1;
+    // } else {
+    //   $column = $pos;
+    // }
+    $column = $pos;
+    //   if ($check) {
+    //     $column = $pos;
+    //   } else {
+    //     $column = $pos - 1;
+    //   }
   }
 
+
+
+  $i = $row;
   if (count($answersArr) === 1) {
     $result = preg_split("//u", $answersArr[0], -1, PREG_SPLIT_NO_EMPTY);
     $resultCount = 0;
-    $i = $row;
-    for ($j = $column; $j < $columnMax; $j++) {
+    echo ("ЭТО С КАКОГО СИМВОЛА МЫ РАБОТАЕМ " . $column . "<br>\n");
+    echo ("ЭТО СЛОВО, КОТОРОЕ МЫ ВСТАВЛЯЕМ " . $answersArr[0] . "<br>\n");
+    echo ("ЭТО ДЛИНА ЭТОГО СЛОВА " . mb_strlen($answersArr[0]) . "<br>\n");
+    echo ("ЭТО СТРОКА КУДА МЫ ВСТАВЛЯЕМ СЛОВО " . implode("", $resultArr[$i]) . "<br>\n");
+    for ($j = $column; $j < ($column + mb_strlen($answersArr[0])); $j++) {
       if ($resultArr[$i][$j] === ".") {
         break;
       }
       $resultArr[$i][$j] = $result[$resultCount];
       $resultCount++;
     }
+  } else
+
+  if ((count($answersArr) !== 1) && $check) {
+    for ($j = 0; $j < $columnMax; $j++) {
+      if ($resultArr[$i][$j] === "6") {
+        $resultArr[$i][$j] = ".";
+      }
+    }
   }
+
   return $resultArr;
 }
 
@@ -459,37 +488,38 @@ function createMap($line)
   //Находим все возможные слова и записываем их в массив
   $findWords = [];
   $currentWord = "";
+  $j = 0;
   for ($i = 0; $i < count($line); $i++) {
+    // echo ("ОБНУЛЯЕМ: " . $currentWord . "<br>\n");
     $currentWord = "";
-    $flag = false;
-    while ($line[$i] !== "." && $i < count($line)) {
-      $currentWord = $currentWord . $line[$i];
-      if (checkLetters($line[$i]) === false) {
-        $flag = true;
-      }
-      if ($i + 1 < count($line)) {
-        if ($line[$i + 1] === "." && ($flag === true) && (strlen($currentWord) > 1)) {
+    $j = $i;
+    while ($j < count($line)) {
+
+      $currentWord = $currentWord . $line[$j];
+      if ($i + 1 < count($line) && $line[$j] !== ".") {
+        if ((mb_strlen($currentWord) > 2) && checkDigits($currentWord)) {
+          // echo ("ЭТО СЛОВО, КОТОРОЕ ПОПАДАТ В КАРТУ: " . $currentWord . "<br>\n");
           array_push($findWords, $currentWord);
         }
-      } else {
-        if (($flag === true) && (strlen($currentWord) > 1)) {
-          array_push($findWords, $currentWord);
-        }
-      }
-      if ($i + 1 < count($line)) {
-        $i++;
       } else {
         break;
       }
+      $j++;
     }
   }
+
+
 
   $horizontalMap = [];
   //Формируем карту соответствий; 
   //Номер символа в строке => Слово; Номер строки возьмем снаружи;
   //Возвращаем карту;
   foreach ($findWords as $p => $word) {
-    $horizontalMap[$word] =  strpos(implode("", $line), $word); //поменял тут местами с № => $word; на $word => №
+    // echo ("ЭТО СЛОВО, С КОТОРЫМ МЫ РАБОТАЕМ: "  . $word . "<br>\n");
+    // echo ("ЭТО СТРОКА ОТКУДА МЫ ВЗЯЛИ ЭТО СЛОВО: " . implode("", $line) . "<br>\n");
+    // echo ("ЭТО НА КАКОМ СИМВОЛЕ МЫ НАШЛИ ЭТО ПОДСТРОКУ strpos: " . strpos(implode("", $line), $word) . "<br>\n");
+    // echo ("ЭТО НА КАКОМ СИМВОЛЕ МЫ НАШЛИ ЭТО ПОДСТРОКУ mb_strpos: " . mb_strpos(implode("", $line), $word) . "<br>\n");
+    $horizontalMap[$word] =  mb_strpos(implode("", $line), $word); //поменял тут местами с № => $word; на $word => №
   }
 
   return $horizontalMap;
@@ -558,13 +588,13 @@ function solveCrossword($resultArr, $encryptedWords, $claim, $url = "https://pon
 
 //Находит оставшиеся неразгаданые пробелы и заполняет их
 //Возвращает новый результирующий массив
-function fillGaps($arr, $claim)
+function fillGaps($arr, $claim, $check = false)
 {
   foreach ($arr as $h => $line) {
     if (checkDigits(implode("", $line))) {
       $myMap = createMap($line);
       $answersArr = checkMap($myMap, $claim);
-      $arr = writeWord($arr, $answersArr, $h, $myMap,  count($line));
+      $arr = writeWord($arr, $answersArr, $h, $myMap,  count($line), $check);
     }
   }
   return $arr;
@@ -645,17 +675,21 @@ $resultArr = [
   ["4", "2", "1", "3", "6", "3", "3", "4", "5", "6"],
 ];
 
-//Зашифрованные слова
-$encryptedWords = [
-  ["1", "1", "5", "3", "2", "4", "1", "5", "2", "6"],
-  ["1", "6", "5", "6", "3", "3", "5", "3", "6", "1"],
-  ["5", "4", "2", "4", "2", "5", "1", "3", "2", "2"],
-  ["3", "6", "5", "5", "5", "1", "6", "5", "6", "3"],
-  ["4", "2", "1", "3", "6", "3", "3", "4", "5", "6"],
-];
-
 //Наборы букв
 $claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
+
+
+//Зашифрованные слова
+$encryptedWords = createEncrtyptedWords($resultArr, $claim);
+
+// $encryptedWords = [
+//   ["1", "1", "5", "3", "2", "4", "1", "5", "2", "6"],
+//   ["1", "6", "5", "6", "3", "3", "5", "3", "6", "1"],
+//   ["5", "4", "2", "4", "2", "5", "1", "3", "2", "2"],
+//   ["3", "6", "5", "5", "5", "1", "6", "5", "6", "3"],
+//   ["4", "2", "1", "3", "6", "3", "3", "4", "5", "6"],
+// ];
+
 
 //url api
 $url = "https://poncy.ru/crossword/crossword-solve.json?mask=";
@@ -679,7 +713,7 @@ $resultArr = mergeVerticalHorizontal($verticalResultArr, $horizontalResultArr);
 // viewVerticalResult($resultArr);
 
 //Отмечаю черные поля;
-$resultArr = fillBlackFields($resultArr);
+// $resultArr = fillBlackFields($resultArr);
 
 viewHorizontalResult($resultArr);
 viewVerticalResult($resultArr);
@@ -692,7 +726,7 @@ $verticalArr = $verticalArr[0];
 //Заполняем пробелы
 echo ("Возможные слова: " . "<br>\n");
 $horizontalArr = fillGaps($horizontalArr, $claim);
-$verticalArr = fillGaps($verticalArr, $claim);
+$verticalArr = fillGaps($verticalArr, $claim, true);
 
 //Делаем слияние
 $resultArr = mergeVerticalHorizontal($verticalArr, $horizontalArr);
@@ -701,6 +735,24 @@ $resultArr = mergeVerticalHorizontal($verticalArr, $horizontalArr);
 viewHorizontalResult($resultArr);
 viewVerticalResult($resultArr);
 
+
+//---------------2 раз
+
+//Заполняем пробелы
+echo ("Возможные слова: " . "<br>\n");
+$horizontalArr = fillGaps($horizontalArr, $claim);
+$verticalArr = fillGaps($verticalArr, $claim, true);
+
+//Делаем слияние
+$resultArr = mergeVerticalHorizontal($verticalArr, $horizontalArr);
+
+//Выводим результат
+viewHorizontalResult($resultArr);
+viewVerticalResult($resultArr);
+viewVerticalResult($encryptedWords);
+
+
+//---------------2 раз
 
 
 //Результирующее слово
