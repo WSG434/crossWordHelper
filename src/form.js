@@ -85,3 +85,6 @@ for (let i = 0; i < 3; i++) {
     element.style.boxShadow = `0 0 3px ${color}, 0 0 15px ${color}`;
   }
 }
+
+
+//Отправляю запрос на сервер
