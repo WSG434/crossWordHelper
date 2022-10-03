@@ -1,6 +1,7 @@
 
 const board = document.querySelector("#board");
 const crossword = document.querySelector("#crossword");
+const spinner = document.querySelector(".spinner");
 const column = 5;
 const row = 10;
 const colors = [
@@ -9,7 +10,18 @@ const colors = [
   '#3498db',
   '#e67e22',
   '#2ecc71'];
+let element;
+let color;
+let finalWordElement;
 
+//---------------------------------------------------Исходные данные
+
+//Результирующее слово
+const finalWordPos = [
+  [[0, 4], [3, 3], [4, 7]],
+  [[2, 3], [3, 9], [4, 9]],
+  [[1, 6], [2, 1], [3, 0]]
+]
 
 //Наполним форму шифрами
 const inputArr = [
@@ -22,6 +34,8 @@ const inputArr = [
 
 //Наборы букв
 const claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
+
+//---------------------------------------------------Формирование HTML разметки
 
 //Заголовок
 const crossword_header = document.createElement('div');
@@ -66,16 +80,7 @@ crossword_button.innerText = "Разгадать";
 crossword.append(crossword_button);
 
 
-
-//Добавляем цвета для финальног ослова
-let element;
-let color;
-let finalWordElement;
-const finalWordPos = [
-  [[0, 4], [3, 3], [4, 7]],
-  [[2, 3], [3, 9], [4, 9]],
-  [[1, 6], [2, 1], [3, 0]]
-]
+//Добавляем цвета для финального ослова
 
 for (let i = 0; i < 3; i++) {
   color = colors[i];
@@ -90,6 +95,7 @@ for (let i = 0; i < 3; i++) {
   }
 }
 
+//---------------------------------------------------Отправка запроса и обработка ответа
 
 //Отправляю запрос на сервер
 
@@ -98,33 +104,25 @@ let obj = {
   "claim": claim
 }
 
-let myJson = JSON.stringify(obj);
-
-let jsonGET;
+let myJSON = JSON.stringify(obj);
 let resultArr;
 let finalWord;
-const spinner = document.querySelector(".spinner");
 
 crossword_button.addEventListener("click", e => {
   spinner.classList.remove("hidden");
   $.ajax({
-    url: "ajaxJSON.php", //Страница к которой обращаемся
+    url: "./server.php", //Страница к которой обращаемся
     type: "POST", //Тип запроса
     dataType: "text",
     data: { //Параметры запроса
-      myData: myJson
+      myData: myJSON
     },
     success: function (res) {
       // В случае удачного обращения мы получаем данные
-      // от test.php в переменную res
-      //Выполняем какие то действия..
-      // $("#preloader").hide(); //Скрыли гифку, с id preloader
       spinner.classList.add("hidden");
-      // $("#test").html(res); //Добавили код, который получили со страницы test.php
-      // $("#my_div").html("Parsing is DONE; CROSSWORD SOLVED"); // STOP SPINNER.
-      jsonGET = JSON.parse(res);
-      resultArr = jsonGET["resultArr"];
-      finalWord = jsonGET["finalWord"];
+      myJSON = JSON.parse(res);
+      resultArr = myJSON["resultArr"];
+      finalWord = myJSON["finalWord"];
       console.log(resultArr);
       console.log(finalWord);
       //Заполняю доску ответами из полученного массива

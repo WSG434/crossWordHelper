@@ -30,7 +30,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* max-width: 800px; */
   flex: 1;
   flex-wrap: wrap;
 }
@@ -54,6 +53,7 @@ body {
   font-weight: bold;
   line-height: 1.31;
   margin-bottom: 30px;
+  user-select: none;
 }
 
 .crossword__final {
@@ -84,18 +84,6 @@ body {
   background: #303030;
 }
 
-/* .crossword__button::after {
-  content: "";
-  position: absolute;
-  display: block;
-  top: 500px;
-  left: 500px;
-  width: 100px;
-  height: 100px;
-  background: #1d1d1d;
-  margin: 2px;
-  box-shadow: 0 0 2px #000;
-} */
 
 .square {
   width: 10vh;
@@ -113,6 +101,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  user-select: none;
 }
 
 
@@ -120,7 +109,6 @@ body {
   transition-duration: 0s;
   background: #303030;
 }
-
 
 
 .spinner {

@@ -4,24 +4,18 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>crossWordHelper</title>
-    <link rel="stylesheet" href="./spinner.css">
+  <link rel="stylesheet" href="./main.css">
+  <title>crossWordHelpert</title>
+
 </head>
 <body>
-  <div class="preloader">
-    <div class="preloader__row">
-      <div class="preloader__item"></div>
-      <div class="preloader__item"></div>
+  <div class="spinner hidden"></div>
+  <div class="container" id="board">
+    <div class="crossword" id="crossword">
+
     </div>
   </div>
-<script>
-  window.onload = function () {
-    document.body.classList.add('loaded_hiding');
-    window.setTimeout(function () {
-      document.body.classList.add('loaded');
-      document.body.classList.remove('loaded_hiding');
-    }, 500);
-  }
-</script>
+  <script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+  <script src="./client.js"></script>
 </body>
 </html>
