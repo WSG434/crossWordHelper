@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script> <!-- Подключаем jq -->
+</head>
+
+<body>
+    <img src="https://media.tenor.com/kvaEswtp-hQAAAAj/12.gif" id="preloader" alt="" /> <!-- Какая то гифка, там например круг, который меняет цвета -->
+    <div class="container">
+        <button onclick="myAjax()">Parse JSON links</button>
+        <div id="my_div">
+        </div> 
+        <div class="test" id="test">
+ 
+        </div>
+    </div>
+    <script>
+        $("#my_div").html( "Wait while parsing..." ); 
+        // $("#my_div").$("#preloader").show(); 
+        
+        //Скрыли гифку, с id preloader
+
+        $.ajax({
+            // url: "spinner.php", //Страница к которой обращаемся
+            url: "./request.php", //Страница к которой обращаемся
+            type: "POST", //Тип запроса
+            data: { //Параметры запроса
+                param1: "Параметр 1",
+                param2: "Параметр 2"
+            },
+            success: function(res) { // В случае удачного обращения мы получаем данные
+                // от test.php в переменную res
+                //Выполняем какие то действия..
+                $("#preloader").hide(); //Скрыли гифку, с id preloader
+                $("#test").html(res); //Добавили код, который получили со страницы test.php
+                $("#my_div").html("Parsing is DONE; CROSSWORD SOLVED"); // STOP SPINNER.
+
+            }
+        });
+    </script>
+</body>
+
+</html>

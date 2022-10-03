@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css?family=Muli&display=swap');
+
+html,
+body {
+  height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+body {
+  font-family: 'Muli', sans-serif;
+  overflow: hidden;
+  margin: 0;
+  background: #222;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* max-width: 800px; */
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.crossword {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+
+}
+
+.crossword__row {
+  display: flex;
+  flex-direction: row;
+}
+
+.crossword__header {
+  color: wheat;
+  font-size: 7vh;
+  font-weight: bold;
+  line-height: 1.31;
+  margin-bottom: 30px;
+}
+
+.crossword__final {
+  margin-top: 50px;
+}
+
+.crossword__button {
+  position: relative;
+  color: wheat;
+  font-size: 5vh;
+  font-weight: bold;
+  line-height: 1.31;
+  margin-top: 30px;
+  background: #1d1d1d;
+  display: flex;
+  /* width: 15vw; */
+  /* height: 10vh; */
+  text-align: center;
+  padding: 15px 50px;
+  border-radius: 10px;
+  transition: .5s linear;
+  cursor: pointer;
+  user-select: none;
+}
+
+.crossword__button:hover {
+  transition-duration: 0s;
+  background: #303030;
+}
+
+/* .crossword__button::after {
+  content: "";
+  position: absolute;
+  display: block;
+  top: 500px;
+  left: 500px;
+  width: 100px;
+  height: 100px;
+  background: #1d1d1d;
+  margin: 2px;
+  box-shadow: 0 0 2px #000;
+} */
+
+.square {
+  width: 10vh;
+  height: 10vh;
+  background: #1d1d1d;
+  margin: 2px;
+  box-shadow: 0 0 2px #000;
+  transition: .5s linear;
+
+  color: wheat;
+  font-size: 5vh;
+  font-weight: bold;
+  line-height: 1.31;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.square:hover {
+  transition-duration: 0s;
+  background: #303030;
+}
+
+
+
+.kek {
+  color: #a1532c;
+  color: #b18628;
+  color: #cacd22;
+  color: #35c614;
+  color: #2286d3;
+}
