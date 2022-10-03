@@ -136,6 +136,30 @@ function createEncrtyptedWord($word, $claim)
   return $encryptedWord;
 }
 
+function createEncrtyptedWords($arr, $claim)
+{
+  $currentClaim = "";
+  echo ("<br>\n");
+  echo ("Слова по горизонтали: " . "<br>\n");
+  for ($i = 0; $i < count($arr); $i++) {
+    echo ("Слово №:" . $i + 1 . " ");
+    for ($j = 0; $j < count($arr[$i]); $j++) {
+      if (!checkDigits($arr[$i][$j])) {
+        if ($arr[$i][$j] === ".") {
+          $arr[$i][$j] = "6";
+          echo ($arr[$i][$j]);
+          continue;
+        }
+        $currentClaim = findClaimByLetter($claim, $arr[$i][$j]);
+        $arr[$i][$j] = findCurrentEncrypt($currentClaim, $claim);
+      }
+      echo ($arr[$i][$j]);
+    }
+    echo ("<br>\n");
+  }
+  echo ("Массив Шифров успешно сформирован!" . "<br>\n");
+}
+
 //---------------------------------------------------Поиск слов
 
 
@@ -151,13 +175,13 @@ function findMatch($words, $claim, $encryptedWord)
     $letters = preg_split("//u", $currentWord, -1, PREG_SPLIT_NO_EMPTY);
     //Прохожу конкретное слово посивмольно и проверяю на вхождение в нужное множество
     foreach ($letters as $letter => $value) {
-      //Проверка на 6 маску с неизвестной буквой
-      if ($encryptedWord[(int)$letter] === "6") {
-        if ($letter + 1 >= count($letters)) { //Проверка на тот случай, если 6 маска в конце слова
-          array_push($resultWords, $currentWord);  //Записываем в результирующий массив
-        }
-        continue;
-      }
+      // //Проверка на 6 маску с неизвестной буквой
+      // if ($encryptedWord[$letter] === "6") {
+      //   if ($letter + 1 >= count($letters)) { //Проверка на тот случай, если 6 маска в конце слова
+      //     array_push($resultWords, $currentWord);  //Записываем в результирующий массив
+      //   }
+      //   continue;
+      // }
 
       //Проверяем обычные буквы на вхождение в соответствуюущие множества
       if (strpos($claim[$encryptedWord[(int)$letter] - 1], $value) === false) {
@@ -371,6 +395,9 @@ function writeWord($resultArr, $answersArr, $row, $map, $columnMax = 0)
     $resultCount = 0;
     $i = $row;
     for ($j = $column; $j < $columnMax; $j++) {
+      if ($resultArr[$i][$j] === ".") {
+        break;
+      }
       $resultArr[$i][$j] = $result[$resultCount];
       $resultCount++;
     }
@@ -648,8 +675,14 @@ $verticalResultArr = solveCrossword($verticalArr[0], $verticalArr[1], $claim, $u
 //Слияние вертикального и горизонтального массивов
 $resultArr = mergeVerticalHorizontal($verticalResultArr, $horizontalResultArr);
 
+// viewHorizontalResult($resultArr);
+// viewVerticalResult($resultArr);
+
 //Отмечаю черные поля;
 $resultArr = fillBlackFields($resultArr);
+
+viewHorizontalResult($resultArr);
+viewVerticalResult($resultArr);
 
 //Создаем актуальные массивы
 $horizontalArr = $resultArr;
@@ -679,3 +712,26 @@ $finalEncryptedWord = ["1", "1", "1", "2", "2", "2", "3", "3", "3"];
 echo ("<br>\n");
 echo ("Финальное слово: " . "<br>\n");
 getFinalWord($finalClaim, $finalEncryptedWord);
+
+
+//Массив результирующих данных 
+$arr = [
+  ["А", "Г", "5", "3", "2", "4", "А", "5", "2", "6"],
+  ["1", "6", "5", "6", "3", "3", "5", "3", "6", "1"],
+  ["5", "4", "2", "4", "2", "5", "В", "3", "2", "2"],
+  ["3", "6", "5", "5", "5", "1", "6", "5", "6", "3"],
+  ["4", "2", "1", "3", "6", "Н", "3", "4", "5", "6"],
+];
+
+
+$encryptedWords = [
+  ["1", "1", "5", "3", "2", "4", "1", "5", "2", "6"],
+  ["1", "6", "5", "6", "3", "3", "5", "3", "6", "1"],
+  ["5", "4", "2", "4", "2", "5", "1", "3", "2", "2"],
+  ["3", "6", "5", "5", "5", "1", "6", "5", "6", "3"],
+  ["4", "2", "1", "3", "6", "3", "3", "4", "5", "6"],
+];
+
+createEncrtyptedWords($resultArr, $claim);
+// createEncrtyptedWords($resultArr, $claim);
+createEncrtyptedWords($encryptedWords, $claim);
