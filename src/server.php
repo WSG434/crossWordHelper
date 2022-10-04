@@ -51,9 +51,13 @@ function getData($url = "", $mask = "", $count = 0, $i = 0)
 //Возвращает массив данных по определенной маске
 function checkCache($name, $mask, $url = "https://poncy.ru/crossword/crossword-solve.json?mask=", $sleepTime = 200000)
 {
-  //Кэширование; Сделать функцию
   if (file_exists("./data/" . $name)) {
     $words = json_decode(file_get_contents("./data/" . $name), true); //чтение локально
+    if ($words === null) {
+      usleep($sleepTime); // ждать 0.2 секунды, защита от бана сервера
+      $words = getData($url . $mask, $mask); //отправка запроса на сервер
+      file_put_contents("./data/" . $name, json_encode($words));
+    }
   } else {
     usleep($sleepTime); // ждать 0.2 секунды, защита от бана сервера
     $words = getData($url . $mask, $mask); //отправка запроса на сервер
