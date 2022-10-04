@@ -1,8 +1,8 @@
 <?php
 
 ini_set('max_execution_time', 600);
-error_reporting(E_ERROR);
-// error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
+// error_reporting(E_ERROR);
+error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 
 
 
@@ -603,18 +603,23 @@ function getFinalWord($finalClaim, $finalEncryptedWord, $url = "https://poncy.ru
 // Входной результирующий массив
 // Наборы букв
 // }
+$inputJSON = json_decode($_POST["myData"], true);
 
 //Массив результирующих данных 
-$resultArr = [
-  ["1", "1", "5", "3", "2", "4", "1", "5", "2", "6"],
-  ["1", "6", "5", "6", "3", "3", "5", "3", "6", "1"],
-  ["5", "4", "2", "4", "2", "5", "1", "3", "2", "2"],
-  ["3", "6", "5", "5", "5", "1", "6", "5", "6", "3"],
-  ["4", "2", "1", "3", "6", "3", "3", "4", "5", "6"],
-];
+// $resultArr = [
+//   ["1", "1", "5", "3", "2", "4", "1", "5", "2", "6"],
+//   ["1", "6", "5", "6", "3", "3", "5", "3", "6", "1"],
+//   ["5", "4", "2", "4", "2", "5", "1", "3", "2", "2"],
+//   ["3", "6", "5", "5", "5", "1", "6", "5", "6", "3"],
+//   ["4", "2", "1", "3", "6", "3", "3", "4", "5", "6"],
+// ];
+$resultArr = $inputJSON["inputArr"];
+
 
 //Наборы букв
-$claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
+// $claim = ["АВГ", "ЕИК", "ЛНО", "ПРС", "ТУЩ", "ЬЯ"];
+$claim = $inputJSON["claim"];
+
 
 //url api
 $url = "https://poncy.ru/crossword/crossword-solve.json?mask=";
