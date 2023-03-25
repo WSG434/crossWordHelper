@@ -1,7 +1,10 @@
+
 ![crossWordHelper](https://github.com/WSG434/crossWordHelper/blob/master/preview.jpg?raw=true)
 ## crossWordHelper
 
 Тестовое задание на php
+
+![crossWordHelper](https://github.com/WSG434/crossWordHelper/blob/master/Task.jpg?raw=true)
 
 Приложение crossWordHelper помогает решать кроссворды.
 Используется API сайта poncy.ru.
